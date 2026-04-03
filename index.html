@@ -4,14 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>site.jhan.me !</title>
+    <style>
+        :root {
+            color: #1f1a14;
+            background: #f6f1e8;
+        }
+
+        body {
+            width: min(32rem, calc(100% - 3rem));
+            margin: 0 auto;
+            padding: 3rem 0 4rem;
+            color: inherit;
+            background: linear-gradient(180deg, #f6f1e8 0%, #fffdf8 100%);
+            font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
+        }
+
+        h3 {
+            margin: 0 0 1rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #776143;
+        }
+
+        #nav-ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        #nav-ul a {
+            display: block;
+            padding: 0.9rem 1rem;
+            border: 1px solid #dfd4c2;
+            border-radius: 0.9rem;
+            color: inherit;
+            background: #fffdf9;
+            text-decoration: none;
+            box-shadow: none;
+            transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+        }
+
+        #nav-ul a:hover {
+            transform: translateY(-1px);
+            border-color: #bca06e;
+            background: #fff8eb;
+        }
+    </style>
 </head>
 <body>
 
     <h3>navigation</h3>
     
-    <ul>
-        <li><a href="run-pace">run-pace</a></li>
-        <li><a href="speical-char-title">special-char-title</a></li>
-    </ul>
+    <ul id="nav-ul"></ul>
+    <script>
+        function navItem(href, label) {
+            return { href, label };
+        }
+
+        const navItems = [
+            "run-pace",
+            navItem("speical-char-title", "special-char-title"),
+            "ㅈㄷㄹㄷㅈㄹ",
+            "ㄹㅈㄷㄹㄷㅈㄹ"
+        ];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const navList = document.getElementById("nav-ul");
+
+            navItems.forEach((item) => {
+                const href = typeof item === "string" ? item : item.href;
+                const label = typeof item === "string" ? item : item.label ?? item.href;
+                const li = document.createElement("li");
+                const link = document.createElement("a");
+
+                link.href = href;
+                link.textContent = label;
+
+                li.appendChild(link);
+                navList.appendChild(li);
+            });
+        });
+    </script>
 </body>
 </html>
