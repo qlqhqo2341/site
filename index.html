@@ -61,23 +61,21 @@
     
     <ul id="nav-ul"></ul>
     <script>
-        function navItem(href, label) {
-            return { href, label };
-        }
-
-        const navItems = [
-            "run-pace",
-            navItem("speical-char-title", "special-char-title"),
-            "ㅈㄷㄹㄷㅈㄹ",
-            "ㄹㅈㄷㄹㄷㅈㄹ"
-        ];
+        const navItems = (() => {
+            function it(href, label) {
+                return { href, label: label || href };
+            }
+            
+            return [
+                it("run-pace"),
+                it("speical-char-title", "special-char-title"),
+            ]
+        })();
 
         document.addEventListener("DOMContentLoaded", () => {
             const navList = document.getElementById("nav-ul");
 
-            navItems.forEach((item) => {
-                const href = typeof item === "string" ? item : item.href;
-                const label = typeof item === "string" ? item : item.label ?? item.href;
+            navItems.forEach(({ href, label }) => {
                 const li = document.createElement("li");
                 const link = document.createElement("a");
 
