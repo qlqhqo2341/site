@@ -1,34 +1,39 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>오늘 일지 이동</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>오늘 일지 이동</title>
+  <style>
+    /* 기본적으로 본문을 숨깁니다 */
+    body { display: none; }
+  </style>
+  <script>
+    (function () {
+      const now = new Date();
+      const yy = String(now.getFullYear()).slice(-2);
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      const fileName = yy + mm + dd + "_%EC%9D%BC%EC%A7%80.md";
+      const targetUrl = "https://git.jhan.me/jeonghan-yee/obsidian-git/src/branch/main/z_daily/" + fileName;
+
+      // 리다이렉트 시도
+      window.location.replace(targetUrl);
+
+      // 만약 1~2초 뒤에도 페이지가 안 넘어갔다면 (오류 등) 내용을 보여줍니다.
+      setTimeout(() => {
+        document.body.style.display = "block";
+        const fallbackLink = document.getElementById("fallbackLink");
+        if (fallbackLink) {
+          fallbackLink.href = targetUrl;
+          fallbackLink.textContent = targetUrl;
+        }
+      }, 1000);
+    }());
+  </script>
 </head>
 <body>
-<p id="status">오늘 일지로 이동 중...</p>
-<p><a id="fallbackLink" href="/">이동이 안 되면 이 링크를 클릭하세요.</a></p>
-
-<script>
-(function () {
-  const now = new Date();
-  const yy = String(now.getFullYear()).slice(-2);
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
-  const fileName = yy + mm + dd + "_%EC%9D%BC%EC%A7%80.md";
-  const targetUrl =
-    "https://git.jhan.me/jeonghan-yee/obsidian-git/src/branch/main/z_daily/" +
-    fileName;
-
-  const fallbackLink = document.getElementById("fallbackLink");
-  const status = document.getElementById("status");
-
-  fallbackLink.href = targetUrl;
-  fallbackLink.textContent = targetUrl;
-  status.textContent = "오늘 일지로 이동합니다: " + yy + mm + dd;
-
-  window.location.replace(targetUrl);
-}());
-</script>
+  <p id="status">오늘 일지로 이동 중...</p>
+  <p><a id="fallbackLink" href="/">이동이 안 되면 이 링크를 클릭하세요.</a></p>
 </body>
 </html>
