@@ -3,19 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <title>정적호스팅</title>
     <style>
         :root {
-            color: #1f1a14;
-            background: #f6f1e8;
+            color-scheme: light dark;
+            --page-text: #1f1a14;
+            --page-bg: #f6f1e8;
+            --body-bg: linear-gradient(180deg, #f6f1e8 0%, #fffdf8 100%);
+            --heading-text: #776143;
+            --card-border: #dfd4c2;
+            --card-bg: #fffdf9;
+            --card-hover-border: #bca06e;
+            --card-hover-bg: #fff8eb;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --page-text: #f1e9db;
+                --page-bg: #19140f;
+                --body-bg: linear-gradient(180deg, #19140f 0%, #241c15 100%);
+                --heading-text: #d6b98f;
+                --card-border: #4a3b2d;
+                --card-bg: #241c15;
+                --card-hover-border: #d0a96d;
+                --card-hover-bg: #302419;
+            }
+        }
+
+        html {
+            background: var(--page-bg);
+            color: var(--page-text);
         }
 
         body {
             width: min(32rem, calc(100% - 3rem));
             margin: 0 auto;
             padding: 3rem 0 4rem;
-            color: inherit;
-            background: linear-gradient(180deg, #f6f1e8 0%, #fffdf8 100%);
+            min-height: 100vh;
+            color: var(--page-text);
+            background: var(--body-bg);
             font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
         }
 
@@ -25,7 +52,7 @@
             font-weight: 700;
             letter-spacing: 0.14em;
             text-transform: uppercase;
-            color: #776143;
+            color: var(--heading-text);
         }
 
         #nav-ul {
@@ -39,10 +66,10 @@
         #nav-ul a {
             display: block;
             padding: 0.9rem 1rem;
-            border: 1px solid #dfd4c2;
+            border: 1px solid var(--card-border);
             border-radius: 0.9rem;
             color: inherit;
-            background: #fffdf9;
+            background: var(--card-bg);
             text-decoration: none;
             box-shadow: none;
             transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
@@ -50,8 +77,8 @@
 
         #nav-ul a:hover {
             transform: translateY(-1px);
-            border-color: #bca06e;
-            background: #fff8eb;
+            border-color: var(--card-hover-border);
+            background: var(--card-hover-bg);
         }
     </style>
 </head>
