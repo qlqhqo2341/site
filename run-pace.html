@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>러닝 페이스·속도·예상기록 상호변환 계산기</title>
+<title>러닝 페이스·속도·400m 랩타임·예상기록 상호변환 계산기</title>
 <style>
   :root{
     --bg:#0b0f14; --panel:#121821; --ink:#eaf2ff; --muted:#9fb3d1; --accent:#5aa9ff; --ok:#66e0a3; --warn:#ffac5a;
@@ -61,7 +61,7 @@
 </head>
 <body>
   <header>
-    <h1>러닝 페이스 · 속도 · 10K/하프/풀코스 상호변환</h1>
+    <h1>러닝 페이스 · 속도 · 400m 랩타임 · 10K/하프/풀코스 상호변환</h1>
     <div class="inline">
       <span class="pill">단위: km 기준</span>
       <button class="btn reset" id="resetBtn">리셋</button>
@@ -71,7 +71,7 @@
   <main class="app">
     <div class="grid">
       <!-- 페이스 / 속도 -->
-      <section class="card span6">
+      <section class="card span4">
         <div class="label">페이스 (분/㎞)</div>
         <div class="row">
           <input type="text" id="pace" placeholder="예: 4:30 또는 4.5" inputmode="decimal" />
@@ -79,12 +79,21 @@
         <div class="hint">형식: <b>m:ss</b> 권장. 소수 입력 시 분 단위로 해석(4.5 → 4분30초).</div>
       </section>
 
-      <section class="card span6">
+      <section class="card span4">
         <div class="label">속도 (㎞/h)</div>
         <div class="row">
           <input type="number" step="0.01" id="speed" placeholder="예: 13.33" />
         </div>
         <div class="hint">자동으로 페이스와 기록이 갱신됩니다.</div>
+      </section>
+
+      <section class="card span4">
+        <div class="label">400m 트랙 1랩 시간</div>
+        <div class="row">
+          <input type="number" step="1" id="track400" placeholder="예: 96" />
+          <span class="unit">초</span>
+        </div>
+        <div class="hint">1초 단위 입력. 96초 = 1분 36초 = 4:00/㎞ 페이스.</div>
       </section>
 
       <!-- 대표 거리 타임 -->
@@ -163,8 +172,8 @@
             <div class="value" id="outSpeed">-</div>
           </div>
           <div class="span3">
-            <div class="label">1km 기준 시간</div>
-            <div class="value" id="out1k">-</div>
+            <div class="label">400m 트랙 1랩</div>
+            <div class="value" id="out400">-</div>
           </div>
           <div class="span3">
             <div class="label">5km 예상</div>
@@ -193,6 +202,7 @@
   const el = {
     pace: document.getElementById('pace'),
     speed: document.getElementById('speed'),
+    track400: document.getElementById('track400'),
     t10k: document.getElementById('t10k'),
     thm: document.getElementById('thm'),
     tfm: document.getElementById('tfm'),
@@ -202,7 +212,7 @@
     out: {
       pace: document.getElementById('outPace'),
       speed: document.getElementById('outSpeed'),
-      onek: document.getElementById('out1k'),
+      track400: document.getElementById('out400'),
       fivek: document.getElementById('out5k'),
     },
     resetBtn: document.getElementById('resetBtn'),
@@ -262,9 +272,14 @@
   }
   function formatPace(secPerKm){
     if(secPerKm == null || !isFinite(secPerKm)) return '-';
-    const m = Math.floor(secPerKm/60);
-    const s = Math.round(secPerKm%60);
+    const rounded = Math.round(secPerKm);
+    const m = Math.floor(rounded/60);
+    const s = rounded%60;
     return `${m}:${s.toString().padStart(2,'0')}`;
+  }
+  function formatTrack400Seconds(sec){
+    if(sec == null || !isFinite(sec)) return '-';
+    return String(Math.round(sec));
   }
 
   // --- 계산 로직 ---
@@ -275,6 +290,14 @@
   function paceSecToSpeed(paceSec){
     if(!paceSec || paceSec<=0) return null;
     return 3600 / paceSec;
+  }
+  function track400ToPaceSec(track400Sec){
+    if(!track400Sec || track400Sec<=0) return null;
+    return track400Sec / 0.4;
+  }
+  function paceSecToTrack400(paceSec){
+    if(!paceSec || paceSec<=0) return null;
+    return paceSec * 0.4;
   }
   function timeFromPace(distKm, paceSec){
     return distKm * paceSec;
@@ -310,6 +333,12 @@
       case 'speed': {
         const spd = parseFloat(el.speed.value);
         const p = speedToPaceSec(spd);
+        if(p && p>0) paceSec = p;
+        break;
+      }
+      case 'track400': {
+        const lapSec = parseFloat(el.track400.value);
+        const p = track400ToPaceSec(lapSec);
         if(p && p>0) paceSec = p;
         break;
       }
@@ -360,6 +389,11 @@
       if(p2 && p2>0) paceSec = p2;
     }
     if(!paceSec){
+      const lap = parseFloat(el.track400.value);
+      const p3 = track400ToPaceSec(lap);
+      if(p3 && p3>0) paceSec = p3;
+    }
+    if(!paceSec){
       const t10 = parseTimeToSec(el.t10k.value);
       if(t10 && t10>0) paceSec = paceFromTime(D10K, t10);
     }
@@ -380,9 +414,10 @@
     // 2) paceSec가 정해졌다면 모든 항목 갱신
     if(paceSec && isFinite(paceSec) && paceSec>0){
       // 표시용
+      const track400Sec = paceSecToTrack400(paceSec);
       el.out.pace.textContent  = formatPace(paceSec);
       el.out.speed.textContent = (paceSecToSpeed(paceSec) ?? 0).toFixed(2) + " ㎞/h";
-      el.out.onek.textContent  = formatSecToHMS(paceSec);
+      el.out.track400.textContent = track400Sec ? `${formatTrack400Seconds(track400Sec)}초` : '-';
       el.out.fivek.textContent = formatSecToHMS(timeFromPace(D5K, paceSec));
 
       // 입력칸 싱크 (source에서 직접 바꾼 칸은 건드리지 않음)
@@ -392,6 +427,9 @@
       if(source!=='speed'){
         const sp = paceSecToSpeed(paceSec);
         el.speed.value = sp ? sp.toFixed(2) : '';
+      }
+      if(source!=='track400'){
+        el.track400.value = track400Sec ? formatTrack400Seconds(track400Sec) : '';
       }
 
       // 기록들 계산
@@ -438,7 +476,7 @@
       // 기준이 없으면 출력 섹션 초기화
       el.out.pace.textContent='-';
       el.out.speed.textContent='-';
-      el.out.onek.textContent='-';
+      el.out.track400.textContent='-';
       el.out.fivek.textContent='-';
     }
 
@@ -446,7 +484,7 @@
   }
 
   // 이벤트 바인딩
-  ['pace','speed','t10k','thm','tfm','customDist','customTime'].forEach(id=>{
+  ['pace','speed','track400','t10k','thm','tfm','customDist','customTime'].forEach(id=>{
     const src = id;
     el[id].addEventListener('input', ()=> updateAll(src));
     el[id].addEventListener('change', ()=> updateAll(src));
@@ -469,6 +507,7 @@
     updating=true;
     el.pace.value = '';
     el.speed.value = '';
+    el.track400.value = '';
     el.t10k.value = '';
     el.thm.value  = '';
     el.tfm.value  = '';
