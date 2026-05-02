@@ -15,10 +15,10 @@
     color:var(--ink); font-family: ui-sans-serif, -apple-system, "Segoe UI", Pretendard, system-ui, Roboto, "Apple SD Gothic Neo","Noto Sans KR", sans-serif;
     line-height:1.45; padding:24px;
   }
-  header{max-width:980px;margin:0 auto 18px auto;display:flex;justify-content:space-between;gap:16px;align-items:center}
+  header{max-width:1120px;margin:0 auto 18px auto;display:flex;justify-content:space-between;gap:16px;align-items:center}
   h1{font-size:20px;margin:0}
   .app{
-    max-width:980px;margin:0 auto; background:var(--panel); border:1px solid var(--border);
+    max-width:1120px;margin:0 auto; background:var(--panel); border:1px solid var(--border);
     border-radius:14px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,.35);
   }
   .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:14px}
@@ -41,20 +41,40 @@
   .hint{color:var(--muted); font-size:12px; margin-top:6px}
   .btn{
     background:#112036; color:#dceaff; border:1px solid var(--border); padding:10px 12px; border-radius:10px; cursor:pointer;
-    font-size:14px; transition:all .15s;
+    font-family:inherit; font-size:14px; transition:all .15s;
   }
   .btn:hover{border-color:var(--accent); transform:translateY(-1px)}
   .btn.secondary{background:#0b111a}
   .btn.reset{background:#2a0f14; border-color:#5b1a22}
+  .step-btn{flex:0 0 auto; min-width:56px; padding-inline:8px; font-variant-numeric:tabular-nums; white-space:nowrap}
+  .pace-row{display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:8px}
+  .pace-row input{min-width:0}
   .pill{background:#0b111a;border:1px solid var(--border);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted)}
   .inline{display:inline-flex;align-items:center;gap:8px}
   .right{margin-left:auto}
   .kicker{color:var(--muted); font-size:12px}
   .value{font-variant-numeric:tabular-nums}
-  footer{max-width:980px;margin:14px auto 0 auto; color:var(--muted); font-size:12px; display:flex; justify-content:space-between; gap:12px; align-items:center}
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-  .chip{padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:#0b111a;color:var(--muted);cursor:pointer}
+  footer{max-width:1120px;margin:14px auto 0 auto; color:var(--muted); font-size:12px; display:flex; justify-content:space-between; gap:12px; align-items:center}
+  .preset-strip{
+    display:grid; grid-template-columns:32px minmax(0,1fr) 32px; gap:6px; align-items:start; margin-top:8px;
+  }
+  .preset-scroll{
+    width:32px; height:32px; border-radius:8px; border:1px solid var(--border); background:#0b111a;
+    color:var(--muted); cursor:pointer; font:inherit; line-height:30px; padding:0; transition:border-color .15s, color .15s, background .15s;
+  }
+  .preset-scroll:hover{border-color:var(--accent); color:#dceaff; background:#112036}
+  .preset-scroll:disabled{opacity:.35; cursor:default; border-color:var(--border); color:var(--muted); background:#0b111a}
+  .chips{
+    position:relative; display:flex; flex-wrap:nowrap; gap:8px; min-height:40px; padding:0 2px 8px;
+    overflow-x:auto; overflow-y:hidden; scrollbar-width:thin; scrollbar-color:#344b68 #0b111a;
+    -webkit-overflow-scrolling:touch;
+  }
+  .chips::-webkit-scrollbar{height:8px}
+  .chips::-webkit-scrollbar-track{background:#0b111a;border-radius:999px}
+  .chips::-webkit-scrollbar-thumb{background:#344b68;border-radius:999px}
+  .chip{flex:0 0 auto; height:32px; white-space:nowrap; font:inherit; line-height:30px; padding:0 10px;border-radius:999px;border:1px solid var(--border);background:#0b111a;color:var(--muted);cursor:pointer}
   .chip:hover{border-color:var(--accent); color:#dceaff}
+  .chip.is-nearest{border-color:var(--accent); color:#dceaff; background:#112036}
   .two-col{display:grid; grid-template-columns:1fr 1fr; gap:10px}
   .small{font-size:12px}
 </style>
@@ -71,66 +91,79 @@
   <main class="app">
     <div class="grid">
       <!-- 페이스 / 속도 -->
-      <section class="card span4">
+      <section class="card span6">
         <div class="label">페이스 (분/㎞)</div>
-        <div class="row">
-          <input type="text" id="pace" placeholder="예: 4:30 또는 4.5" inputmode="decimal" />
+        <div class="row pace-row">
+          <button class="btn step-btn" type="button" id="paceDown">-5초</button>
+          <input type="text" id="pace" placeholder="예: 4:30" />
+          <button class="btn step-btn" type="button" id="paceUp">+5초</button>
         </div>
-        <div class="hint">형식: <b>m:ss</b> 권장. 소수 입력 시 분 단위로 해석(4.5 → 4분30초).</div>
+        <div class="hint">형식: <b>m:ss</b>. 예: 4:30.</div>
+        <div class="preset-strip small" data-preset-group="pace">
+          <button class="preset-scroll" type="button" data-scroll-dir="-1" aria-label="페이스 프리셋 왼쪽으로 스크롤">&lt;</button>
+          <div class="chips"></div>
+          <button class="preset-scroll" type="button" data-scroll-dir="1" aria-label="페이스 프리셋 오른쪽으로 스크롤">&gt;</button>
+        </div>
       </section>
 
-      <section class="card span4">
+      <section class="card span6">
         <div class="label">속도 (㎞/h)</div>
         <div class="row">
           <input type="number" step="0.01" id="speed" placeholder="예: 13.33" />
         </div>
-        <div class="hint">자동으로 페이스와 기록이 갱신됩니다.</div>
+        <div class="hint">형식: ㎞/h 숫자. 예: 13.33.</div>
+        <div class="preset-strip small" data-preset-group="speed">
+          <button class="preset-scroll" type="button" data-scroll-dir="-1" aria-label="속도 프리셋 왼쪽으로 스크롤">&lt;</button>
+          <div class="chips"></div>
+          <button class="preset-scroll" type="button" data-scroll-dir="1" aria-label="속도 프리셋 오른쪽으로 스크롤">&gt;</button>
+        </div>
       </section>
 
-      <section class="card span4">
+      <section class="card span6">
         <div class="label">400m 트랙 1랩 시간</div>
         <div class="row">
-          <input type="number" step="1" id="track400" placeholder="예: 96" />
+          <input type="number" step="2" id="track400" placeholder="예: 96" />
           <span class="unit">초</span>
         </div>
-        <div class="hint">1초 단위 입력. 96초 = 1분 36초 = 4:00/㎞ 페이스.</div>
+        <div class="hint">형식: 초 단위 숫자. 예: 96.</div>
+        <div class="preset-strip small" data-preset-group="track400">
+          <button class="preset-scroll" type="button" data-scroll-dir="-1" aria-label="400m 프리셋 왼쪽으로 스크롤">&lt;</button>
+          <div class="chips"></div>
+          <button class="preset-scroll" type="button" data-scroll-dir="1" aria-label="400m 프리셋 오른쪽으로 스크롤">&gt;</button>
+        </div>
       </section>
 
       <!-- 대표 거리 타임 -->
-      <section class="card span4">
+      <section class="card span6">
         <div class="label">10km 기록</div>
         <input type="text" id="t10k" placeholder="예: 45:00" />
-        <div class="chips small">
-          <span class="chip" data-fill="t10k" data-val="38:00">38:00</span>
-          <span class="chip" data-fill="t10k" data-val="39:00">39:00</span>
-          <span class="chip" data-fill="t10k" data-val="40:00">40:00</span>
-          <span class="chip" data-fill="t10k" data-val="45:00">45:00</span>
-          <span class="chip" data-fill="t10k" data-val="50:00">50:00</span>
+        <div class="hint">형식: <b>m:ss</b> 또는 <b>h:mm:ss</b>. 예: 45:00.</div>
+        <div class="preset-strip small" data-preset-group="t10k">
+          <button class="preset-scroll" type="button" data-scroll-dir="-1" aria-label="10km 프리셋 왼쪽으로 스크롤">&lt;</button>
+          <div class="chips"></div>
+          <button class="preset-scroll" type="button" data-scroll-dir="1" aria-label="10km 프리셋 오른쪽으로 스크롤">&gt;</button>
         </div>
       </section>
 
-      <section class="card span4">
+      <section class="card span6">
         <div class="label">하프(21.0975km) 기록</div>
         <input type="text" id="thm" placeholder="예: 1:45:00" />
-        <div class="chips small">
-          <span class="chip" data-fill="thm" data-val="1:25:00">1:25:00</span>
-          <span class="chip" data-fill="thm" data-val="1:30:00">1:30:00</span>
-          <span class="chip" data-fill="thm" data-val="1:40:00">1:40:00</span>
-          <span class="chip" data-fill="thm" data-val="1:50:00">1:50:00</span>
-          <span class="chip" data-fill="thm" data-val="2:00:00">2:00:00</span>
+        <div class="hint">형식: <b>h:mm:ss</b> 또는 <b>m:ss</b>. 예: 1:45:00.</div>
+        <div class="preset-strip small" data-preset-group="thm">
+          <button class="preset-scroll" type="button" data-scroll-dir="-1" aria-label="하프 프리셋 왼쪽으로 스크롤">&lt;</button>
+          <div class="chips"></div>
+          <button class="preset-scroll" type="button" data-scroll-dir="1" aria-label="하프 프리셋 오른쪽으로 스크롤">&gt;</button>
         </div>
       </section>
 
-      <section class="card span4">
+      <section class="card span6">
         <div class="label">풀(42.195km) 기록</div>
         <input type="text" id="tfm" placeholder="예: 3:40:00" />
-        <div class="chips small">
-          <span class="chip" data-fill="tfm" data-val="3:00:00">3:00:00</span>
-          <span class="chip" data-fill="tfm" data-val="3:10:00">3:10:00</span>
-          <span class="chip" data-fill="tfm" data-val="3:20:00">3:20:00</span>
-          <span class="chip" data-fill="tfm" data-val="3:30:00">3:30:00</span>
-          <span class="chip" data-fill="tfm" data-val="3:45:00">3:45:00</span>
-          <span class="chip" data-fill="tfm" data-val="4:00:00">4:00:00</span>
+        <div class="hint">형식: <b>h:mm:ss</b>. 예: 3:40:00.</div>
+        <div class="preset-strip small" data-preset-group="tfm">
+          <button class="preset-scroll" type="button" data-scroll-dir="-1" aria-label="풀코스 프리셋 왼쪽으로 스크롤">&lt;</button>
+          <div class="chips"></div>
+          <button class="preset-scroll" type="button" data-scroll-dir="1" aria-label="풀코스 프리셋 오른쪽으로 스크롤">&gt;</button>
         </div>
       </section>
 
@@ -146,18 +179,7 @@
             <input type="text" id="customTime" placeholder="예: 22:30" />
           </div>
         </div>
-        <div class="hint">커스텀 거리·기록 중 하나만 입력해도, 현재 페이스/속도로 다른 항목이 계산됩니다.</div>
-      </section>
-
-      <!-- 옵션 -->
-      <section class="card span12">
-        <div class="row">
-          <label class="inline" style="gap:10px">
-            <input type="checkbox" id="useRiegel" />
-            <span>레겔(Riegel) 보정으로 거리 차이에 따른 페이스 저하를 반영해 예측하기</span>
-          </label>
-          <span class="kicker right">지수(b) 기본값 1.06 · 단거리→장거리 예측 시 약간 느리게 보정</span>
-        </div>
+        <div class="hint">형식: 거리는 km 숫자, 기록은 <b>m:ss</b> 또는 <b>h:mm:ss</b>.</div>
       </section>
 
       <!-- 요약 -->
@@ -196,11 +218,14 @@
   const DHM  = 21.0975;
   const DFM  = 42.195;
   const D5K  = 5.0;
-  const RIEGEL_B = 1.06; // 보정 지수 기본값
+  const DEFAULT_PACE = '6:00';
+  const LAST_PACE_KEY = 'runPace:lastPace';
 
   // --- 엘리먼트 참조 ---
   const el = {
     pace: document.getElementById('pace'),
+    paceDown: document.getElementById('paceDown'),
+    paceUp: document.getElementById('paceUp'),
     speed: document.getElementById('speed'),
     track400: document.getElementById('track400'),
     t10k: document.getElementById('t10k'),
@@ -208,7 +233,6 @@
     tfm: document.getElementById('tfm'),
     customDist: document.getElementById('customDist'),
     customTime: document.getElementById('customTime'),
-    useRiegel: document.getElementById('useRiegel'),
     out: {
       pace: document.getElementById('outPace'),
       speed: document.getElementById('outSpeed'),
@@ -216,7 +240,7 @@
       fivek: document.getElementById('out5k'),
     },
     resetBtn: document.getElementById('resetBtn'),
-    chips: document.querySelectorAll('.chip'),
+    presetContainers: document.querySelectorAll('[data-preset-group]'),
   };
 
   // --- 상태 ---
@@ -230,7 +254,7 @@
 
     // "m:ss" 또는 "h:mm:ss" 또는 "ss"
     if (/^\d+(\.\d+)?$/.test(str)) {
-      // 순수 숫자면 초로 취급. (또는 분 소수? 입력 의도 모호하지만 기록칸은 초로 보는게 일반적)
+      // 기록칸의 순수 숫자는 초로 취급한다.
       return Math.round(parseFloat(str));
     }
     const parts = str.split(':').map(s=>s.trim());
@@ -261,14 +285,12 @@
     if(!str && str !== 0) return null;
     str = (''+str).trim();
     if(!str) return null;
-    // 소수(분) 허용: "4.5" => 4분30초
-    if(/^\d+(\.\d+)?$/.test(str)){
-      const minutes = parseFloat(str);
-      return Math.round(minutes*60);
-    }
-    // m:ss
-    const sec = parseTimeToSec(str);
-    return sec;
+    const match = str.match(/^(\d+):(\d{1,2})$/);
+    if(!match) return null;
+    const minutes = Number(match[1]);
+    const seconds = Number(match[2]);
+    if(minutes < 0 || seconds < 0 || seconds >= 60) return null;
+    return Math.round(minutes*60 + seconds);
   }
   function formatPace(secPerKm){
     if(secPerKm == null || !isFinite(secPerKm)) return '-';
@@ -280,6 +302,65 @@
   function formatTrack400Seconds(sec){
     if(sec == null || !isFinite(sec)) return '-';
     return String(Math.round(sec));
+  }
+  function loadSavedPace(){
+    try {
+      const saved = localStorage.getItem(LAST_PACE_KEY);
+      const savedPaceSec = parsePaceToSecPerKm(saved);
+      return savedPaceSec ? formatPace(savedPaceSec) : DEFAULT_PACE;
+    } catch (err) {
+      return DEFAULT_PACE;
+    }
+  }
+  function savePace(paceSec){
+    if(!paceSec || !isFinite(paceSec) || paceSec <= 0) return;
+    try {
+      localStorage.setItem(LAST_PACE_KEY, formatPace(paceSec));
+    } catch (err) {
+      // 저장소를 사용할 수 없는 브라우저 설정이면 이번 세션 계산만 유지한다.
+    }
+  }
+  function rangeSeconds(startSec, endSec, stepSec){
+    const values = [];
+    for(let sec = startSec; sec <= endSec; sec += stepSec){
+      values.push(sec);
+    }
+    return values;
+  }
+  function rangeNumber(start, end, step){
+    const values = [];
+    for(let value = start; value <= end + 0.000001; value += step){
+      values.push(Number(value.toFixed(2)));
+    }
+    return values;
+  }
+  function speedLabel(speed){
+    return Number.isInteger(speed) ? String(speed) : speed.toFixed(1);
+  }
+  function preset(fill, value, label=value, paceSec=null){
+    return {fill, value, label, paceSec};
+  }
+  function renderPresetChips(){
+    const presets = {
+      pace: rangeSeconds(150, 510, 5).map(sec => preset('pace', formatPace(sec), formatPace(sec), sec)),
+      speed: rangeNumber(7, 24, 0.5).map(speed => preset('speed', speed.toFixed(2), speedLabel(speed), speedToPaceSec(speed))),
+      track400: rangeSeconds(60, 204, 2).map(sec => preset('track400', String(sec), `${sec}초`, track400ToPaceSec(sec))),
+      t10k: rangeSeconds(25*60, 90*60, 60).map(sec => preset('t10k', formatSecToHMS(sec), formatSecToHMS(sec), paceFromTime(D10K, sec))),
+      thm: rangeSeconds(55*60, 180*60, 5*60).map(sec => preset('thm', formatSecToHMS(sec), formatSecToHMS(sec), paceFromTime(DHM, sec))),
+      tfm: rangeSeconds(105*60, 360*60, 5*60).map(sec => preset('tfm', formatSecToHMS(sec), formatSecToHMS(sec), paceFromTime(DFM, sec))),
+    };
+
+    el.presetContainers.forEach(container => {
+      const group = container.dataset.presetGroup;
+      const groupPresets = presets[group] || [];
+      const scroller = container.querySelector('.chips');
+      if(!scroller) return;
+      scroller.innerHTML = groupPresets.map(item =>
+        `<button class="chip" type="button" data-fill="${item.fill}" data-val="${item.value}" data-pace-sec="${item.paceSec}">${item.label}</button>`
+      ).join('');
+      scroller.addEventListener('scroll', () => updatePresetScrollButtons(container), {passive:true});
+    });
+    requestAnimationFrame(() => el.presetContainers.forEach(updatePresetScrollButtons));
   }
 
   // --- 계산 로직 ---
@@ -306,19 +387,127 @@
     if(!distKm || distKm<=0 || !timeSec || timeSec<=0) return null;
     return timeSec / distKm;
   }
+  function paceForStep(){
+    const paceSec = parsePaceToSecPerKm(el.pace.value);
+    if(paceSec && paceSec>0) return paceSec;
 
-  // Riegel 예측: T2 = T1 * (D2/D1)^b
-  function riegelPredictTime(t1Sec, d1, d2, b=RIEGEL_B){
-    if(!t1Sec||!d1||!d2||t1Sec<=0||d1<=0||d2<=0) return null;
-    return t1Sec * Math.pow(d2/d1, b);
+    const speedPaceSec = speedToPaceSec(parseFloat(el.speed.value));
+    if(speedPaceSec && speedPaceSec>0) return speedPaceSec;
+
+    const trackPaceSec = track400ToPaceSec(parseFloat(el.track400.value));
+    if(trackPaceSec && trackPaceSec>0) return trackPaceSec;
+
+    return 300;
+  }
+  function stepPace(deltaSec){
+    if(updating) return;
+    const rounded = Math.round(paceForStep()/5)*5;
+    const next = Math.max(60, rounded + deltaSec);
+    el.pace.value = formatPace(next);
+    updateAll('pace');
+    syncPresetScrolls(next);
+  }
+  function updatePresetScrollButtons(strip){
+    const scroller = strip.querySelector('.chips');
+    const left = strip.querySelector('[data-scroll-dir="-1"]');
+    const right = strip.querySelector('[data-scroll-dir="1"]');
+    if(!scroller || !left || !right) return;
+    const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+    left.disabled = scroller.scrollLeft <= 1;
+    right.disabled = scroller.scrollLeft >= maxScroll - 1;
+  }
+  function scrollPresetStrip(button){
+    const strip = button.closest('[data-preset-group]');
+    const scroller = strip && strip.querySelector('.chips');
+    if(!strip || !scroller) return;
+    const dir = Number(button.dataset.scrollDir) || 1;
+    scroller.scrollBy({
+      left: dir * Math.max(240, scroller.clientWidth),
+      behavior: 'smooth'
+    });
+    window.setTimeout(() => updatePresetScrollButtons(strip), 260);
+  }
+  function closestPresetChip(scroller, paceSec){
+    let closest = null;
+    let closestDiff = Infinity;
+    scroller.querySelectorAll('.chip[data-pace-sec]').forEach(chip => {
+      const chipPace = parseFloat(chip.dataset.paceSec);
+      if(!isFinite(chipPace)) return;
+      const diff = Math.abs(chipPace - paceSec);
+      if(diff < closestDiff){
+        closest = chip;
+        closestDiff = diff;
+      }
+    });
+    return closest;
+  }
+  function centerChipInScroller(scroller, chip, behavior='smooth'){
+    const targetLeft = chip.offsetLeft + chip.offsetWidth / 2 - scroller.clientWidth / 2;
+    scroller.scrollTo({
+      left: Math.max(0, targetLeft),
+      behavior
+    });
+  }
+  function syncPresetScrolls(paceSec, behavior='smooth'){
+    if(!paceSec || !isFinite(paceSec) || paceSec <= 0) return;
+    requestAnimationFrame(() => {
+      el.presetContainers.forEach(strip => {
+        const scroller = strip.querySelector('.chips');
+        if(!scroller) return;
+        const nearest = closestPresetChip(scroller, paceSec);
+        scroller.querySelectorAll('.chip.is-nearest').forEach(chip => chip.classList.remove('is-nearest'));
+        if(!nearest) return;
+        nearest.classList.add('is-nearest');
+        centerChipInScroller(scroller, nearest, behavior);
+        window.setTimeout(() => updatePresetScrollButtons(strip), 260);
+      });
+    });
+  }
+  function normalizedPresetValue(id){
+    switch(id){
+      case 'pace': {
+        const paceSec = parsePaceToSecPerKm(el.pace.value);
+        return paceSec ? formatPace(paceSec) : null;
+      }
+      case 'speed': {
+        const speed = parseFloat(el.speed.value);
+        return speed && speed > 0 ? speed.toFixed(2) : null;
+      }
+      case 'track400': {
+        const seconds = parseFloat(el.track400.value);
+        const rounded = Math.round(seconds);
+        return isFinite(seconds) && seconds > 0 && Math.abs(seconds - rounded) < 0.000001 ? String(rounded) : null;
+      }
+      case 't10k':
+      case 'thm':
+      case 'tfm': {
+        const timeSec = parseTimeToSec(el[id].value);
+        return timeSec && timeSec > 0 ? formatSecToHMS(timeSec) : null;
+      }
+      default:
+        return null;
+    }
+  }
+  function exactPresetChipForInput(id){
+    const value = normalizedPresetValue(id);
+    if(!value) return null;
+    const strip = document.querySelector(`[data-preset-group="${id}"]`);
+    if(!strip) return null;
+    return Array.from(strip.querySelectorAll('.chip[data-fill]')).find(chip =>
+      chip.dataset.fill === id && chip.dataset.val === value
+    ) || null;
+  }
+  function syncPresetIfExactInput(id){
+    const chip = exactPresetChipForInput(id);
+    if(!chip) return;
+    const paceSec = parseFloat(chip.dataset.paceSec);
+    if(isFinite(paceSec)) syncPresetScrolls(paceSec);
   }
 
   // 메인 업데이트: 어느 입력이 바뀌었는지 받아 처리
   function updateAll(source){
     if(updating) return;
     updating = true;
-
-    const useRiegel = el.useRiegel.checked;
 
     // 1) 우선 기준 페이스(sec/km)를 정한다.
     let paceSec = null;
@@ -344,25 +533,17 @@
       }
       case 't10k': {
         const t = parseTimeToSec(el.t10k.value);
-        if(t && t>0) paceSec = useRiegel ? null : paceFromTime(D10K, t);
-        // Riegel 사용 시에는 "기준 기록"으로 삼고, 다른 거리 예측만 Riegel로 계산
-        if(useRiegel && t>0) {
-          // 기준은 10K 기록 자체. 다른 거리 산출 시만 Riegel.
-          // paceSec은 10K 평균페이스로 일단 표기(참고용)
-          paceSec = paceFromTime(D10K, t);
-        }
+        if(t && t>0) paceSec = paceFromTime(D10K, t);
         break;
       }
       case 'thm': {
         const t = parseTimeToSec(el.thm.value);
-        if(t && t>0) paceSec = useRiegel ? null : paceFromTime(DHM, t);
-        if(useRiegel && t>0) paceSec = paceFromTime(DHM, t);
+        if(t && t>0) paceSec = paceFromTime(DHM, t);
         break;
       }
       case 'tfm': {
         const t = parseTimeToSec(el.tfm.value);
-        if(t && t>0) paceSec = useRiegel ? null : paceFromTime(DFM, t);
-        if(useRiegel && t>0) paceSec = paceFromTime(DFM, t);
+        if(t && t>0) paceSec = paceFromTime(DFM, t);
         break;
       }
       case 'customTime':
@@ -370,8 +551,7 @@
         const dist = parseFloat(el.customDist.value);
         const t = parseTimeToSec(el.customTime.value);
         if(dist>0 && t>0){
-          paceSec = useRiegel ? null : paceFromTime(dist, t);
-          if(useRiegel) paceSec = paceFromTime(dist, t);
+          paceSec = paceFromTime(dist, t);
         }
         break;
       }
@@ -413,6 +593,8 @@
 
     // 2) paceSec가 정해졌다면 모든 항목 갱신
     if(paceSec && isFinite(paceSec) && paceSec>0){
+      savePace(paceSec);
+
       // 표시용
       const track400Sec = paceSecToTrack400(paceSec);
       el.out.pace.textContent  = formatPace(paceSec);
@@ -432,46 +614,12 @@
         el.track400.value = track400Sec ? formatTrack400Seconds(track400Sec) : '';
       }
 
-      // 기록들 계산
-      // 레겔 보정 사용 시: 기준 입력칸을 기준 기록으로 간주하여 다른 거리를 Riegel로 예측
-      const t10_in = parseTimeToSec(el.t10k.value);
-      const thm_in = parseTimeToSec(el.thm.value);
-      const tfm_in = parseTimeToSec(el.tfm.value);
-      const cd_in = parseFloat(el.customDist.value);
-      const ct_in = parseTimeToSec(el.customTime.value);
+      if(source!=='t10k') el.t10k.value = formatSecToHMS(timeFromPace(D10K, paceSec));
+      if(source!=='thm')  el.thm.value  = formatSecToHMS(timeFromPace(DHM,  paceSec));
+      if(source!=='tfm')  el.tfm.value  = formatSecToHMS(timeFromPace(DFM,  paceSec));
 
-      if(useRiegel){
-        // 기준 기록/거리 결정
-        let baseT=null, baseD=null;
-        if(source==='t10k' && t10_in){ baseT=t10_in; baseD=D10K; }
-        else if(source==='thm' && thm_in){ baseT=thm_in; baseD=DHM; }
-        else if(source==='tfm' && tfm_in){ baseT=tfm_in; baseD=DFM; }
-        else if((source==='customTime'||source==='customDist') && cd_in>0 && ct_in>0){ baseT=ct_in; baseD=cd_in; }
-
-        // 기준이 있으면 Riegel로, 없으면 동일페이스로 선형계산
-        if(baseT && baseD){
-          if(source!=='t10k') el.t10k.value = formatSecToHMS(riegelPredictTime(baseT, baseD, D10K));
-          if(source!=='thm')  el.thm.value  = formatSecToHMS(riegelPredictTime(baseT, baseD, DHM));
-          if(source!=='tfm')  el.tfm.value  = formatSecToHMS(riegelPredictTime(baseT, baseD, DFM));
-          if(source!=='customTime' && source!=='customDist' && cd_in>0){
-            el.customTime.value = formatSecToHMS(riegelPredictTime(baseT, baseD, cd_in));
-          }
-        } else {
-          // 기준이 없으면 평균 페이스로 선형
-          if(source!=='t10k') el.t10k.value = formatSecToHMS(timeFromPace(D10K, paceSec));
-          if(source!=='thm')  el.thm.value  = formatSecToHMS(timeFromPace(DHM,  paceSec));
-          if(source!=='tfm')  el.tfm.value  = formatSecToHMS(timeFromPace(DFM,  paceSec));
-          if(source!=='customTime' && cd_in>0) el.customTime.value = formatSecToHMS(timeFromPace(cd_in, paceSec));
-        }
-      } else {
-        // 단순 동일 페이스 선형 계산
-        if(source!=='t10k') el.t10k.value = formatSecToHMS(timeFromPace(D10K, paceSec));
-        if(source!=='thm')  el.thm.value  = formatSecToHMS(timeFromPace(DHM,  paceSec));
-        if(source!=='tfm')  el.tfm.value  = formatSecToHMS(timeFromPace(DFM,  paceSec));
-
-        const cd = parseFloat(el.customDist.value);
-        if(source!=='customTime' && cd>0) el.customTime.value = formatSecToHMS(timeFromPace(cd, paceSec));
-      }
+      const cd = parseFloat(el.customDist.value);
+      if(source!=='customTime' && cd>0) el.customTime.value = formatSecToHMS(timeFromPace(cd, paceSec));
     } else {
       // 기준이 없으면 출력 섹션 초기화
       el.out.pace.textContent='-';
@@ -484,28 +632,57 @@
   }
 
   // 이벤트 바인딩
+  renderPresetChips();
+
   ['pace','speed','track400','t10k','thm','tfm','customDist','customTime'].forEach(id=>{
     const src = id;
     el[id].addEventListener('input', ()=> updateAll(src));
     el[id].addEventListener('change', ()=> updateAll(src));
   });
-  el.useRiegel.addEventListener('change', ()=> updateAll('toggleRiegel'));
+  ['pace','speed','track400','t10k','thm','tfm'].forEach(id=>{
+    el[id].addEventListener('blur', ()=> syncPresetIfExactInput(id));
+    el[id].addEventListener('keydown', event => {
+      if(event.key !== 'Enter') return;
+      event.preventDefault();
+      updateAll(id);
+      syncPresetIfExactInput(id);
+    });
+  });
+  el.paceDown.addEventListener('click', ()=> stepPace(-5));
+  el.paceUp.addEventListener('click', ()=> stepPace(5));
+  el.pace.addEventListener('keydown', event => {
+    if(event.key === 'ArrowDown'){
+      event.preventDefault();
+      stepPace(-5);
+    } else if(event.key === 'ArrowUp'){
+      event.preventDefault();
+      stepPace(5);
+    }
+  });
+
+  document.addEventListener('click', event => {
+    const button = event.target.closest('.preset-scroll[data-scroll-dir]');
+    if(!button) return;
+    scrollPresetStrip(button);
+  });
 
   // 프리셋 칩 클릭
-  el.chips.forEach(ch=>{
-    ch.addEventListener('click', ()=>{
-      const targetId = ch.dataset.fill;
-      const val = ch.dataset.val;
-      el[targetId].value = val;
-      updateAll(targetId);
-    });
+  document.addEventListener('click', event => {
+    const ch = event.target.closest('.chip[data-fill]');
+    if(!ch) return;
+    const targetId = ch.dataset.fill;
+    const val = ch.dataset.val;
+    const paceSec = parseFloat(ch.dataset.paceSec);
+    el[targetId].value = val;
+    updateAll(targetId);
+    syncPresetScrolls(isFinite(paceSec) ? paceSec : paceForStep());
   });
 
   // 리셋
   el.resetBtn.addEventListener('click', ()=>{
     if(updating) return;
     updating=true;
-    el.pace.value = '';
+    el.pace.value = DEFAULT_PACE;
     el.speed.value = '';
     el.track400.value = '';
     el.t10k.value = '';
@@ -513,13 +690,15 @@
     el.tfm.value  = '';
     el.customDist.value = '';
     el.customTime.value = '';
-    el.useRiegel.checked = false;
     updating=false;
-    updateAll('reset');
+    updateAll('pace');
+    syncPresetScrolls(parsePaceToSecPerKm(DEFAULT_PACE));
   });
 
   // 초기 렌더
-  updateAll('init');
+  el.pace.value = loadSavedPace();
+  updateAll('pace');
+  syncPresetScrolls(parsePaceToSecPerKm(el.pace.value), 'auto');
 })();
 </script>
 </body>
