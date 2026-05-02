@@ -1,50 +1,21 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <title>tester ',.".,""";;'''_-:{__}{}][[</title>
-    <style>
-        :root {
-            color-scheme: light dark;
-            --page-bg: #f6f1e8;
-            --surface-bg: #fffdf9;
-            --text-color: #1f1a14;
-            --border-color: #dfd4c2;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --page-bg: #19140f;
-                --surface-bg: #241c15;
-                --text-color: #f1e9db;
-                --border-color: #4a3b2d;
-            }
-        }
-
-        html {
-            background: var(--page-bg);
-            color: var(--text-color);
-        }
-
-        body {
-            width: min(36rem, calc(100% - 3rem));
-            margin: 0 auto;
-            padding: 3rem 0 4rem;
-            min-height: 100vh;
-            box-sizing: border-box;
-            background: var(--surface-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 1rem;
-            font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
-            line-height: 1.7;
-        }
-    </style>
+    <link rel="stylesheet" href="common.css">
 </head>
 <body>
-    해당 페이지의 타이틀에 어떤 특수문자가 들어가도
-    링크 제목이 잘 생성되는지 테스트하는 용도의 페이지입니다.
+    <header>
+        <h1>특수문자 타이틀 테스트</h1>
+        <span class="pill">title</span>
+    </header>
+
+    <main class="app">
+        해당 페이지의 타이틀에 어떤 특수문자가 들어가도
+        링크 제목이 잘 생성되는지 테스트하는 용도의 페이지입니다.
+    </main>
 </body>
 </html>
