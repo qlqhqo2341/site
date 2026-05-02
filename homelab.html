@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
-    <title>정적 호스팅</title>
+    <title>홈랩</title>
     <style>
         :root {
             --bg: #0b0f14;
@@ -129,8 +129,8 @@
 </head>
 <body>
     <header>
-        <h1>정적 호스팅</h1>
-        <span class="pill">navigation</span>
+        <h1>홈랩</h1>
+        <span class="pill">services</span>
     </header>
 
     <main class="app">
@@ -139,16 +139,22 @@
 
     <script>
         const navItems = (() => {
-            function it(href, label) {
-                return { href, label: label || href };
+            function it(domain, label) {
+                return {
+                    href: normalizeHref(domain),
+                    label: label || domain,
+                };
             }
-            
+
             return [
-                it("run-pace"),
-                it("speical-char-title", "special-char-title"),
-                it("homelab"),
-                // it("today-note"),
-            ]
+                it("https://jhan.me", "Wordpress Blog"),
+                it("https://site.jhan.me", "Site"),
+                it("https://git.jhan.me", "Git"),
+                it("https://bitwarden.jhan.me", "Bitwarden"),
+                it("https://nas.jhan.me", "Synology nas"),
+                it("https://n8n.jhan.me", "n8n"),
+                it("https://windmill.jhan.me", "Windmill"),
+            ];
         })();
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -161,6 +167,7 @@
                 link.href = href;
                 link.textContent = label;
                 link.dataset.status = "checking";
+                link.rel = "noopener";
 
                 li.appendChild(link);
                 navList.appendChild(li);
@@ -184,10 +191,30 @@
 
                     link.dataset.status = response.ok ? "ok" : "error";
                 } catch {
-                    link.dataset.status = "error";
+                    try {
+                        await fetch(link.href, {
+                            method: "HEAD",
+                            mode: "no-cors",
+                            cache: "no-store",
+                        });
+
+                        link.dataset.status = "ok";
+                    } catch {
+                        link.dataset.status = "error";
+                    }
                 }
             }
         });
+
+        function normalizeHref(value) {
+            const href = String(value).trim();
+
+            if (/^(https?:)?\/\//i.test(href)) {
+                return href;
+            }
+
+            return `https://${href}`;
+        }
     </script>
 </body>
 </html>
