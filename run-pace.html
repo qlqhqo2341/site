@@ -25,6 +25,12 @@
   .card{
     grid-column: span 12; background:#0f1520; border:1px solid var(--border); border-radius:12px; padding:16px;
   }
+  .floating-card{
+    position:sticky; top:12px; z-index:10; align-self:start;
+    box-shadow:
+      0 -18px 0 0 var(--panel),
+      0 14px 32px rgba(0,0,0,.45);
+  }
   @media (min-width:800px){
     .span6{grid-column:span 6}
     .span4{grid-column:span 4}
@@ -91,7 +97,7 @@
   <main class="app">
     <div class="grid">
       <!-- 페이스 / 속도 -->
-      <section class="card span6">
+      <section class="card span6 floating-card">
         <div class="label">페이스 (분/㎞)</div>
         <div class="row pace-row">
           <button class="btn step-btn" type="button" id="paceDown">-5초</button>
