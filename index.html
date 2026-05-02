@@ -1,58 +1,65 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <title>정적 호스팅</title>
     <style>
         :root {
-            color-scheme: light dark;
-            --page-text: #1f1a14;
-            --page-bg: #f6f1e8;
-            --body-bg: linear-gradient(180deg, #f6f1e8 0%, #fffdf8 100%);
-            --heading-text: #776143;
-            --card-border: #dfd4c2;
-            --card-bg: #fffdf9;
-            --card-hover-border: #bca06e;
-            --card-hover-bg: #fff8eb;
+            --bg: #0b0f14;
+            --panel: #121821;
+            --ink: #eaf2ff;
+            --muted: #9fb3d1;
+            --accent: #5aa9ff;
+            --border: #223042;
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --page-text: #f1e9db;
-                --page-bg: #19140f;
-                --body-bg: linear-gradient(180deg, #19140f 0%, #241c15 100%);
-                --heading-text: #d6b98f;
-                --card-border: #4a3b2d;
-                --card-bg: #241c15;
-                --card-hover-border: #d0a96d;
-                --card-hover-bg: #302419;
-            }
-        }
-
-        html {
-            background: var(--page-bg);
-            color: var(--page-text);
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            width: min(32rem, calc(100% - 3rem));
-            margin: 0 auto;
-            padding: 3rem 0 4rem;
+            margin: 0;
             min-height: 100vh;
-            color: var(--page-text);
-            background: var(--body-bg);
-            font-family: "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
+            background: linear-gradient(180deg, #0b0f14, #0e141c 40%, #0b0f14);
+            color: var(--ink);
+            font-family: ui-sans-serif, -apple-system, "Segoe UI", Pretendard, system-ui, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+            line-height: 1.45;
+            padding: 24px;
         }
 
-        h3 {
-            margin: 0 0 1rem;
-            font-size: 0.85rem;
-            font-weight: 700;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: var(--heading-text);
+        header {
+            max-width: 980px;
+            margin: 0 auto 18px auto;
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .pill {
+            background: #0b111a;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            color: var(--muted);
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+
+        .app {
+            max-width: 980px;
+            margin: 0 auto;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+            padding: 20px;
         }
 
         #nav-ul {
@@ -60,33 +67,76 @@
             padding: 0;
             list-style: none;
             display: grid;
-            gap: 0.75rem;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 14px;
+        }
+
+        #nav-ul li {
+            grid-column: span 12;
+        }
+
+        @media (min-width: 800px) {
+            #nav-ul li {
+                grid-column: span 4;
+            }
         }
 
         #nav-ul a {
-            display: block;
-            padding: 0.9rem 1rem;
-            border: 1px solid var(--card-border);
-            border-radius: 0.9rem;
+            display: flex;
+            min-height: 68px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #0f1520;
             color: inherit;
-            background: var(--card-bg);
             text-decoration: none;
-            box-shadow: none;
-            transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+            font-size: 16px;
+            font-weight: 650;
+            transition: transform .15s, border-color .15s, background-color .15s;
         }
 
-        #nav-ul a:hover {
+        #nav-ul a::after {
+            content: "";
+            width: 10px;
+            height: 10px;
+            flex: 0 0 10px;
+            border-radius: 50%;
+            background: var(--muted);
+            box-shadow: 0 0 0 3px rgba(159, 179, 209, .12);
+        }
+
+        #nav-ul a:hover,
+        #nav-ul a:focus-visible {
             transform: translateY(-1px);
-            border-color: var(--card-hover-border);
-            background: var(--card-hover-bg);
+            border-color: var(--accent);
+            background: #0b111a;
+            outline: none;
+        }
+
+        #nav-ul a[data-status="ok"]::after {
+            background: #66e0a3;
+            box-shadow: 0 0 0 3px rgba(102, 224, 163, .14);
+        }
+
+        #nav-ul a[data-status="error"]::after {
+            background: #ff5f6d;
+            box-shadow: 0 0 0 3px rgba(255, 95, 109, .14);
         }
     </style>
 </head>
 <body>
+    <header>
+        <h1>정적 호스팅</h1>
+        <span class="pill">navigation</span>
+    </header>
 
-    <h3>navigation</h3>
-    
-    <ul id="nav-ul"></ul>
+    <main class="app">
+        <ul id="nav-ul"></ul>
+    </main>
+
     <script>
         const navItems = (() => {
             function it(href, label) {
@@ -109,10 +159,33 @@
 
                 link.href = href;
                 link.textContent = label;
+                link.dataset.status = "checking";
 
                 li.appendChild(link);
                 navList.appendChild(li);
+
+                checkLink(link);
             });
+
+            async function checkLink(link) {
+                try {
+                    let response = await fetch(link.href, {
+                        method: "HEAD",
+                        cache: "no-store",
+                    });
+
+                    if (response.status === 405) {
+                        response = await fetch(link.href, {
+                            method: "GET",
+                            cache: "no-store",
+                        });
+                    }
+
+                    link.dataset.status = response.ok ? "ok" : "error";
+                } catch {
+                    link.dataset.status = "error";
+                }
+            }
         });
     </script>
 </body>
