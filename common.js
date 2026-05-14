@@ -1,6 +1,7 @@
 (function () {
     "use strict";
 
+    const LINK_CHECKER_URL = "https://n8n.jhan.me/webhook/site-alive-checker";
     const DEFAULT_TIMEOUT_MS = 8000;
     const GET_FALLBACK_STATUSES = new Set([405, 501]);
 
@@ -46,6 +47,36 @@
 
     async function checkLinkStatus(href, options = {}) {
         const timeoutMs = options.timeoutMs || DEFAULT_TIMEOUT_MS;
+        const checkerUrl = options.checkerUrl === undefined ? LINK_CHECKER_URL : options.checkerUrl;
+
+        if (checkerUrl) {
+            return checkLinkStatusWithChecker(href, checkerUrl, timeoutMs);
+        }
+
+        return checkLinkStatusDirect(href, timeoutMs);
+    }
+
+    async function checkLinkStatusWithChecker(href, checkerUrl, timeoutMs) {
+        const url = new URL(checkerUrl);
+        url.searchParams.set("url", href);
+
+        try {
+            const response = await requestJson(url.href, timeoutMs);
+            const aliveStatus = response && response.status;
+
+            return {
+                ok: aliveStatus === "ok",
+                statusText: aliveStatus === "ok" ? "ok" : "failed",
+            };
+        } catch {
+            return {
+                ok: false,
+                statusText: "failed",
+            };
+        }
+    }
+
+    async function checkLinkStatusDirect(href, timeoutMs) {
         let result = await requestLink(href, "HEAD", timeoutMs);
 
         if (result.response && GET_FALLBACK_STATUSES.has(result.response.status)) {
@@ -64,6 +95,26 @@
             status: result.response.status,
             statusText: result.response.statusText,
         };
+    }
+
+    async function requestJson(href, timeoutMs) {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+            const response = await fetch(href, {
+                cache: "no-store",
+                signal: controller.signal,
+            });
+
+            if (!response.ok) {
+                throw new Error(`Checker request failed: ${response.status}`);
+            }
+
+            return response.json();
+        } finally {
+            window.clearTimeout(timeoutId);
+        }
     }
 
     async function requestLink(href, method, timeoutMs) {
@@ -108,6 +159,7 @@
     }
 
     window.SiteLinks = {
+        LINK_CHECKER_URL,
         checkLink,
         checkLinkStatus,
         normalizeHref,
