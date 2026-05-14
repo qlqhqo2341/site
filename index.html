@@ -17,6 +17,7 @@
         <ul id="nav-ul"></ul>
     </main>
 
+    <script src="common.js"></script>
     <script>
         const navItems = (() => {
             function it(href, label) {
@@ -32,41 +33,7 @@
         })();
 
         document.addEventListener("DOMContentLoaded", () => {
-            const navList = document.getElementById("nav-ul");
-
-            navItems.forEach(({ href, label }) => {
-                const li = document.createElement("li");
-                const link = document.createElement("a");
-
-                link.href = href;
-                link.textContent = label;
-                link.dataset.status = "checking";
-
-                li.appendChild(link);
-                navList.appendChild(li);
-
-                checkLink(link);
-            });
-
-            async function checkLink(link) {
-                try {
-                    let response = await fetch(link.href, {
-                        method: "HEAD",
-                        cache: "no-store",
-                    });
-
-                    if (response.status === 405) {
-                        response = await fetch(link.href, {
-                            method: "GET",
-                            cache: "no-store",
-                        });
-                    }
-
-                    link.dataset.status = response.ok ? "ok" : "error";
-                } catch {
-                    link.dataset.status = "error";
-                }
-            }
+            SiteLinks.renderNavList(document.getElementById("nav-ul"), navItems);
         });
     </script>
 </body>

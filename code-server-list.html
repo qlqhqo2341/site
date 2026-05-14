@@ -17,11 +17,12 @@
         <ul id="nav-ul"></ul>
     </main>
 
+    <script src="common.js"></script>
     <script>
         const navItems = (() => {
             function it(domain, label) {
                 return {
-                    href: normalizeHref(domain),
+                    href: SiteLinks.normalizeHref(domain),
                     label: label || domain,
                 };
             }
@@ -33,63 +34,8 @@
         })();
 
         document.addEventListener("DOMContentLoaded", () => {
-            const navList = document.getElementById("nav-ul");
-
-            navItems.forEach(({ href, label }) => {
-                const li = document.createElement("li");
-                const link = document.createElement("a");
-
-                link.href = href;
-                link.textContent = label;
-                link.dataset.status = "checking";
-                link.rel = "noopener";
-
-                li.appendChild(link);
-                navList.appendChild(li);
-
-                checkLink(link);
-            });
-
-            async function checkLink(link) {
-                try {
-                    let response = await fetch(link.href, {
-                        method: "HEAD",
-                        cache: "no-store",
-                    });
-
-                    if (response.status === 405) {
-                        response = await fetch(link.href, {
-                            method: "GET",
-                            cache: "no-store",
-                        });
-                    }
-
-                    link.dataset.status = response.ok ? "ok" : "error";
-                } catch {
-                    try {
-                        await fetch(link.href, {
-                            method: "HEAD",
-                            mode: "no-cors",
-                            cache: "no-store",
-                        });
-
-                        link.dataset.status = "ok";
-                    } catch {
-                        link.dataset.status = "error";
-                    }
-                }
-            }
+            SiteLinks.renderNavList(document.getElementById("nav-ul"), navItems);
         });
-
-        function normalizeHref(value) {
-            const href = String(value).trim();
-
-            if (/^(https?:)?\/\//i.test(href)) {
-                return href;
-            }
-
-            return `https://${href}`;
-        }
     </script>
 </body>
 </html>
