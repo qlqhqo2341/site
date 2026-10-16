@@ -3,6 +3,8 @@
 
   const $ = (id) => document.getElementById(id);
   const STORAGE_KEY = "moment.clock.v1";
+  // Natural Open Runde advances keep pairs such as 11 and 08 optically spaced.
+  const digitWidths = [146.719, 105.781, 136.719, 143.359, 146.484, 139.141, 142.578, 129.141, 142.109, 142.578];
   const defaults = {
     view: "digital", theme: "dark", seconds: true,
     date: true, hour24: true, keepAwake: true,
@@ -55,7 +57,7 @@
   function applyTheme() {
     const theme = preferences.theme === "auto" ? (systemTheme.matches ? "dark" : "light") : preferences.theme;
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#101113" : "#f4f2ed";
+    document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#0e1017" : "#f5f3f8";
     $("theme-button").querySelector("use").setAttribute("href", theme === "dark" ? "#i-sun" : "#i-moon");
     $("theme-button").setAttribute("aria-label", `${theme === "dark" ? "밝은" : "어두운"} 테마로 전환`);
     document.querySelectorAll("[data-theme-choice]").forEach((button) => {
@@ -123,8 +125,15 @@
     const time = `${String(hours).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
     const minuteKey = `${now.toDateString()}-${now.getHours()}-${now.getMinutes()}`;
     if (minuteKey !== lastMinute) {
-      ["hour-tens", "hour-ones", "minute-tens", "minute-ones"].forEach((id, index) => {
-        $(id).setAttribute("href", `#digit-${time[index]}`);
+      const characters = [time[0], time[1], ":", time[2], time[3]];
+      const ids = ["hour-tens", "hour-ones", "time-colon", "minute-tens", "minute-ones"];
+      const tracking = -6;
+      const widths = characters.map((digit) => digit === ":" ? 63.906 : digitWidths[Number(digit)]);
+      let x = (640 - widths.reduce((sum, width) => sum + width, 0) - tracking * 4) / 2;
+      ids.forEach((id, index) => {
+        $(id).setAttribute("href", characters[index] === ":" ? "#digit-colon" : `#digit-${characters[index]}`);
+        $(id).setAttribute("x", x.toFixed(3));
+        x += widths[index] + tracking;
       });
       const label = `${preferences.hour24 ? "" : (now.getHours() < 12 ? "오전 " : "오후 ")}${hours}시 ${now.getMinutes()}분`;
       $("digital-face").setAttribute("aria-label", label);
