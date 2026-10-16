@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#153e35">
+  <meta name="description" content="집으로 가는 길, 서두르지 않아도 되는 2048. 스와이프하고 같은 숫자를 합쳐 보세요. 진행 상황은 자동으로 저장됩니다.">
+  <title>귀가선 2048 · 집까지 한 판</title>
+  <style>
+    :root { color-scheme: light; --paper: #f4f1e8; --ink: #153e35; --muted: #65756d; --orange: #e27343; --line: #d6dccf; --gap: 9px; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+    button, a { touch-action: manipulation; }
+    button { font: inherit; cursor: pointer; }
+    button:disabled { cursor: default; opacity: .38; }
+    button, a { outline-offset: 4px; }
+    :focus-visible { outline: 3px solid var(--orange); }
+    a { color: inherit; }
+    .shell { max-width: 1080px; margin: auto; padding: 0 36px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; min-height: 100px; border-bottom: 1px solid var(--line); }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 800; text-decoration: none; letter-spacing: -.7px; }
+    .brand svg { width: 29px; height: 29px; }
+    .brand small { font-size: 10px; font-weight: 600; letter-spacing: 1.8px; margin-left: 7px; }
+    .home-link { color: var(--muted); text-decoration: none; font-size: 12px; padding: 12px 0 12px 12px; }
+    main { display: grid; grid-template-columns: 1fr 440px; gap: 70px; align-items: center; padding: 50px 0 40px; }
+    .eyebrow { display: flex; align-items: center; gap: 9px; font-size: 11px; font-weight: 700; letter-spacing: 1.1px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); display: inline-block; flex-shrink: 0; }
+    h1 { font-size: clamp(38px, 5.2vw, 62px); line-height: 1.22; letter-spacing: -3.5px; margin: 22px 0 18px; font-weight: 800; }
+    h1 em { color: var(--orange); font-style: normal; }
+    .intro-copy { color: var(--muted); font-size: 14px; line-height: 1.9; margin: 0; word-break: keep-all; }
+    .ticket { margin-top: 40px; border: 1px solid #c6d0c1; border-radius: 4px; padding: 20px 22px; position: relative; background: #eceee3; }
+    .ticket::after { content: ""; position: absolute; left: 0; right: 0; top: 54px; border-top: 1px dashed #c3ccbd; }
+    .ticket-top { display: flex; justify-content: space-between; align-items: center; font-size: 10px; letter-spacing: 1.8px; padding-bottom: 29px; }
+    .ticket-route { display: flex; justify-content: space-between; align-items: center; }
+    .ticket-route strong { font-size: 26px; letter-spacing: -1px; }
+    .ticket-route span { color: var(--muted); font-size: 20px; }
+    .ticket-bottom { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; margin-top: 15px; }
+    .little-note { color: var(--muted); font-size: 11px; margin: 22px 0 0; line-height: 1.8; }
+    .little-note span { font-size: 13px; margin-right: 5px; }
+    .game { min-width: 0; }
+    .game-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+    .game-name strong { display: block; font-size: 23px; letter-spacing: -1px; }
+    .game-name small { display: block; color: var(--muted); font-size: 10px; margin-top: 4px; }
+    .stats { display: flex; gap: 8px; }
+    .stat { min-width: 83px; padding: 9px 12px 8px; border: 1px solid var(--line); border-radius: 8px; text-align: right; font-variant-numeric: tabular-nums; background: #fbfaf5; position: relative; }
+    .stat span { display: block; font-size: 9px; color: var(--muted); margin-bottom: 3px; }
+    .stat strong { font-size: 20px; line-height: 1; }
+    #score-gain { position: absolute; right: 12px; bottom: 0; color: var(--orange); font-size: 15px; font-weight: 800; pointer-events: none; opacity: 0; }
+    #score-gain.show { animation: gain .65s ease-out; }
+    .board-wrap { position: relative; }
+    .board { position: relative; aspect-ratio: 1; border: 12px solid var(--ink); background: var(--ink); border-radius: 15px; touch-action: none; user-select: none; -webkit-user-select: none; overscroll-behavior: contain; }
+    .slots, .tiles { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); gap: var(--gap); }
+    .slot { background: #2b5147; border-radius: 7px; }
+    .tiles { pointer-events: none; }
+    .tile { display: flex; align-items: center; justify-content: center; border-radius: 7px; color: #25483c; background: #eeeee0; font-weight: 800; font-size: 38px; font-variant-numeric: tabular-nums; letter-spacing: -1.7px; transition: transform 110ms ease-in; will-change: transform; }
+    .tile[data-value="4"] { background: #dce5c8; }
+    .tile[data-value="8"] { background: #b9d7a9; }
+    .tile[data-value="16"] { background: #91c6a4; }
+    .tile[data-value="32"] { background: #61ab8d; color: #fffaf0; }
+    .tile[data-value="64"] { background: #37816a; color: #fffaf0; }
+    .tile[data-value="128"] { background: #efbc71; }
+    .tile[data-value="256"] { background: #eda45c; }
+    .tile[data-value="512"] { background: #e88449; color: #fffaf0; }
+    .tile[data-value="1024"] { background: #d4633e; color: #fffaf0; }
+    .tile[data-value="2048"] { background: #f5d76e; color: #513d18; box-shadow: inset 0 0 0 2px #fff1ba; }
+    .tile.large { font-size: 30px; }
+    .tile.super { font-size: 23px; color: #fffaf0; background: #785778; }
+    .tile.new { animation: appear .16s ease-out; }
+    .tile.merged { animation: merge .2s ease-out; }
+    .overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 25px; background: #f4f1e8e8; border-radius: 15px; text-align: center; z-index: 2; backdrop-filter: blur(5px); }
+    [hidden] { display: none !important; }
+    .overlay-icon { width: 49px; height: 49px; display: grid; place-items: center; margin: 0 auto 17px; color: var(--paper); background: var(--ink); border-radius: 50%; font-size: 23px; }
+    .overlay h2 { font-size: 29px; letter-spacing: -1.5px; margin: 0 0 10px; }
+    .overlay p { font-size: 13px; line-height: 1.8; color: var(--muted); margin: 0 0 22px; }
+    .overlay-actions { display: grid; gap: 9px; }
+    .primary { border: 1px solid var(--ink); border-radius: 8px; background: var(--ink); color: #fffaf0; padding: 13px 20px; font-weight: 700; font-size: 13px; }
+    .secondary { border: 1px solid #c7d0c1; border-radius: 8px; background: transparent; color: var(--ink); padding: 12px 20px; font-size: 13px; font-weight: 600; }
+    .toolbar { display: flex; justify-content: space-between; gap: 8px; margin-top: 13px; }
+    .tools { display: flex; gap: 6px; }
+    .tool { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--ink); padding: 8px 12px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .tool svg { width: 15px; height: 15px; }
+    .tool:hover:enabled, .direction:hover { background: #e4e9dc; }
+    .directions { display: flex; gap: 5px; }
+    .direction { border: 1px solid #cdd6c7; background: #e7ebdf; color: var(--ink); border-radius: 7px; width: 39px; min-height: 44px; font-size: 20px; }
+    .journey { margin-top: 24px; }
+    .journey-heading { display: flex; justify-content: space-between; font-size: 11px; gap: 8px; margin-bottom: 15px; }
+    .journey-heading span { color: var(--muted); }
+    .route { display: flex; justify-content: space-between; position: relative; isolation: isolate; }
+    .route::before { content: ""; position: absolute; height: 3px; background: #d3dccd; left: 5px; right: 5px; top: 4px; z-index: -1; }
+    .stop { display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 10px; color: var(--muted); min-width: 24px; }
+    .stop::before { content: ""; width: 11px; height: 11px; border-radius: 50%; border: 2px solid #c7d2c1; background: var(--paper); }
+    .stop.reached { color: var(--ink); font-weight: 700; }
+    .stop.reached::before { background: var(--ink); border-color: var(--ink); }
+    .stop.current::before { border-color: var(--orange); background: var(--orange); box-shadow: 0 0 0 3px #e2734320; }
+    .hint { text-align: center; font-size: 11px; color: var(--muted); margin: 20px 0 0; }
+    footer { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); border-top: 1px solid var(--line); padding: 19px 0 26px; font-size: 10px; letter-spacing: .4px; }
+    .saved { display: inline-flex; align-items: center; gap: 6px; }
+    .saved::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #648a5a; }
+    dialog { width: min(360px, calc(100% - 32px)); border: 1px solid #c6d0c1; border-radius: 16px; background: var(--paper); color: var(--ink); padding: 26px; box-shadow: 0 15px 80px #0c302540; }
+    dialog::backdrop { background: #0b292a80; backdrop-filter: blur(4px); }
+    dialog h2 { font-size: 23px; letter-spacing: -1px; margin: 0 0 12px; }
+    dialog p { color: var(--muted); font-size: 13px; line-height: 1.9; margin: 0 0 18px; }
+    dialog .dialog-actions { display: flex; gap: 8px; }
+    dialog .dialog-actions button { flex: 1; }
+    .help-step { display: flex; gap: 11px; font-size: 13px; line-height: 1.7; margin: 16px 0; color: var(--muted); }
+    .help-step b { color: var(--orange); }
+    .example { background: #e4e9db; border-radius: 8px; text-align: center; font-size: 24px; font-weight: 800; padding: 15px; margin: 18px 0; letter-spacing: 6px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @keyframes appear { from { opacity: .3; scale: .65; } to { opacity: 1; scale: 1; } }
+    @keyframes merge { 0%, 100% { scale: 1; } 45% { scale: 1.1; } }
+    @keyframes gain { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-38px); } }
+    @media (max-width: 900px) and (min-width: 701px) { main { gap: 30px; grid-template-columns: 1fr 390px; } .brand small { display: none; } .shell { padding: 0 25px; } h1 { font-size: 44px; } .ticket { padding: 20px 15px; } .ticket-top { font-size: 9px; letter-spacing: .5px; } }
+    @media (max-width: 700px) {
+      .shell { max-width: 480px; padding: 0 20px; }
+      .topbar { min-height: 66px; }
+      .brand { font-size: 15px; }
+      .brand small { font-size: 8px; margin-left: 0; letter-spacing: 1.2px; }
+      .brand svg { width: 23px; height: 23px; }
+      .home-link { font-size: 11px; }
+      main { display: block; padding: 23px 0 22px; }
+      .eyebrow { font-size: 9px; letter-spacing: .6px; }
+      h1 { font-size: 31px; line-height: 1.3; letter-spacing: -1.8px; margin: 10px 0 6px; }
+      h1 br { display: none; }
+      .intro-copy { font-size: 11px; line-height: 1.7; }
+      .intro-copy br { display: none; }
+      .ticket, .little-note { display: none; }
+      .game { margin-top: 22px; }
+      .game-top { margin-bottom: 12px; }
+      .game-name strong { font-size: 19px; }
+      .game-name small { font-size: 9px; }
+      .stat { min-width: 72px; padding: 8px 10px; }
+      .stat strong { font-size: 18px; }
+      .tile { font-size: clamp(27px, 8.2vw, 38px); }
+      .tile.large { font-size: clamp(22px, 6.8vw, 30px); }
+      .tile.super { font-size: clamp(16px, 5vw, 23px); }
+      .journey { margin-top: 20px; }
+      .tool { padding: 8px; font-size: 11px; }
+      .hint { margin-top: 17px; font-size: 10px; }
+      footer { padding: 15px 0 max(20px, env(safe-area-inset-bottom)); font-size: 9px; }
+    }
+    @media (max-width: 370px) { .shell { padding: 0 14px; } .brand small { display: none; } .board { border-width: 9px; --gap: 7px; } .tool { padding: 8px 6px; font-size: 10px; } .tools, .directions { gap: 4px; } .direction { width: 31px; } .toolbar { gap: 5px; } h1 { font-size: 28px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="페이지 목록으로">
+        <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="6" y="3" width="20" height="23" rx="6" stroke="currentColor" stroke-width="2"/><path d="M7 16h18M11 8h10M11 26l-3 4m13-4 3 4" stroke="currentColor" stroke-width="2"/><circle cx="11" cy="21" r="1.5" fill="currentColor"/><circle cx="21" cy="21" r="1.5" fill="currentColor"/></svg>
+        귀가선 <small>THE WAY HOME</small>
+      </a>
+      <a class="home-link" href="./">페이지 목록 ↗</a>
+    </header>
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div class="eyebrow"><span class="dot"></span> 퇴근길 작은 오락실 · NO. 01</div>
+        <h1 id="page-title">다음 역은,<br> <em>집입니다.</em></h1>
+        <p class="intro-copy">같은 숫자를 모으며, 하루를 천천히 마무리해요.<br> 서두를 필요 없어요. 목적지는 2048.</p>
+        <div class="ticket" aria-label="오늘의 승차권: 지금에서 집으로, 시간 제한 없음">
+          <div class="ticket-top"><b>ONE WAY TICKET</b><span>편도 · 2048행</span></div>
+          <div class="ticket-route"><strong>지금</strong><span>········ →</span><strong>집</strong></div>
+          <div class="ticket-bottom"><span>출발 언제든지</span><span>도착 느긋하게</span></div>
+        </div>
+        <p class="little-note"><span>☾</span> 잠깐 눈을 떼도 괜찮아요.<br> 다음에 열면, 멈췄던 자리에서 출발합니다.</p>
+      </section>
+      <section class="game" aria-label="2048 게임">
+        <div class="game-top">
+          <div class="game-name"><strong>귀가선 2048</strong><small>한 칸씩, 집에 가까이</small></div>
+          <div class="stats">
+            <div class="stat"><span>현재 점수</span><strong id="score">0</strong><i id="score-gain" aria-hidden="true"></i></div>
+            <div class="stat"><span>최고 점수</span><strong id="best">0</strong></div>
+          </div>
+        </div>
+        <div class="board-wrap">
+          <div id="board" class="board" role="group" aria-label="2048 게임판. 스와이프, 방향키 또는 아래 방향 버튼으로 조작하세요." tabindex="0" aria-describedby="play-hint">
+            <div id="slots" class="slots" role="grid" aria-label="4행 4열 숫자판"></div>
+            <div id="tiles" class="tiles" aria-hidden="true"></div>
+          </div>
+          <div id="overlay" class="overlay" hidden>
+            <div>
+              <div id="overlay-icon" class="overlay-icon" aria-hidden="true">⌂</div>
+              <h2 id="overlay-title"></h2>
+              <p id="overlay-copy"></p>
+              <div class="overlay-actions">
+                <button id="overlay-primary" class="primary" type="button"></button>
+                <button id="overlay-secondary" class="secondary" type="button" hidden>한 수 되돌리기</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="tools">
+            <button class="tool" id="undo" type="button" disabled title="한 수 되돌리기" aria-label="한 수 되돌리기"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M6 5 2 9l4 4M3 9h9a5 5 0 0 1 0 10" transform="translate(1 -3)" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>되돌리기</button>
+            <button class="tool" id="new-game" type="button" title="새 게임">새로</button>
+            <button class="tool" id="help" type="button" aria-label="게임 방법" title="게임 방법">?</button>
+          </div>
+          <div class="directions" role="group" aria-label="이동 방향">
+            <button class="direction" data-direction="left" type="button" aria-label="왼쪽으로 이동">←</button>
+            <button class="direction" data-direction="up" type="button" aria-label="위로 이동">↑</button>
+            <button class="direction" data-direction="down" type="button" aria-label="아래로 이동">↓</button>
+            <button class="direction" data-direction="right" type="button" aria-label="오른쪽으로 이동">→</button>
+          </div>
+        </div>
+        <div class="journey">
+          <div class="journey-heading"><b id="journey-label">이제 막 출발했어요</b><span id="move-count">0번 이동</span></div>
+          <div class="route" aria-label="최대 숫자에 따른 여정">
+            <span class="stop current" data-stop="2">출발</span><span class="stop" data-stop="128">128</span><span class="stop" data-stop="256">256</span><span class="stop" data-stop="512">512</span><span class="stop" data-stop="1024">1024</span><span class="stop" data-stop="2048">집</span>
+          </div>
+        </div>
+        <p id="play-hint" class="hint">스와이프 또는 방향키로 이동 · 같은 숫자끼리 합쳐요</p>
+        <div id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+      </section>
+    </main>
+    <footer><span>오늘도 수고했어요. 조심히 들어가요.</span><span class="saved" id="save-status">진행 자동 저장</span></footer>
+  </div>
+  <dialog id="restart-dialog" aria-labelledby="restart-title">
+    <h2 id="restart-title">다시 출발할까요?</h2>
+    <p>현재 게임은 지워지고 새 게임이 시작돼요.<br>최고 점수는 그대로 남아요.</p>
+    <div class="dialog-actions"><button class="secondary" id="cancel-restart" type="button" autofocus>계속할래요</button><button class="primary" id="confirm-restart" type="button">새로 출발</button></div>
+  </dialog>
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <h2 id="help-title">집까지, 한 칸씩.</h2>
+    <div class="example" aria-label="2 더하기 2는 4">2 + 2 → 4</div>
+    <div class="help-step"><b>01</b><span>판을 스와이프하거나 방향 버튼을 누르면 모든 숫자가 그쪽으로 움직여요.</span></div>
+    <div class="help-step"><b>02</b><span>같은 숫자가 만나면 하나로 합쳐져요. 한 번 움직일 때 숫자는 한 번만 합쳐져요.</span></div>
+    <div class="help-step"><b>03</b><span>움직일 때마다 2 또는 4가 생겨요. 2048을 만들면 도착! 그 뒤에도 계속할 수 있어요.</span></div>
+    <p>시간 제한은 없어요. 실수했다면 한 수 되돌리기.<br>PC에서는 방향키 또는 WASD로도 할 수 있어요.<br>진행과 기록은 이 브라우저에 저장돼요.</p>
+    <button class="primary" id="close-help" type="button" style="width:100%">알겠어요, 출발!</button>
+  </dialog>
+  <script id="game-engine">
+    "use strict";
+    window.Ride2048 = (() => {
+      const directions = ["left", "right", "up", "down"];
+      function move(cells, direction) {
+        if (!directions.includes(direction)) throw new Error("Unknown direction");
+        const next = Array(16).fill(0), travels = [], merged = [];
+        let gained = 0;
+        for (let line = 0; line < 4; line++) {
+          const indices = Array.from({ length: 4 }, (_, n) => {
+            if (direction === "left") return line * 4 + n;
+            if (direction === "right") return line * 4 + 3 - n;
+            if (direction === "up") return n * 4 + line;
+            return (3 - n) * 4 + line;
+          });
+          const occupied = indices.filter(index => cells[index]);
+          let target = 0;
+          for (let n = 0; n < occupied.length; n++) {
+            const from = occupied[n], to = indices[target++];
+            if (n + 1 < occupied.length && cells[from] === cells[occupied[n + 1]]) {
+              next[to] = cells[from] * 2;
+              gained += next[to];
+              merged.push(to);
+              travels.push({ from, to }, { from: occupied[++n], to });
+            } else {
+              next[to] = cells[from];
+              travels.push({ from, to });
+            }
+          }
+        }
+        return { cells: next, gained, merged, travels, changed: cells.some((value, index) => value !== next[index]) };
+      }
+      function spawn(cells, random = Math.random) {
+        const empty = cells.flatMap((value, index) => value === 0 ? [index] : []);
+        if (!empty.length) return -1;
+        const index = empty[Math.floor(random() * empty.length)];
+        cells[index] = random() < .9 ? 2 : 4;
+        return index;
+      }
+      function canMove(cells) {
+        return cells.some((value, index) => !value || (index % 4 < 3 && value === cells[index + 1]) || (index < 12 && value === cells[index + 4]));
+      }
+      function validState(value) {
+        return value && Array.isArray(value.cells) && value.cells.length === 16 && value.cells.every(n => Number.isSafeInteger(n) && (n === 0 || (n >= 2 && Number.isInteger(Math.log2(n))))) && value.cells.some(n => n > 0) && Number.isSafeInteger(value.score) && value.score >= 0 && Number.isSafeInteger(value.moves) && value.moves >= 0 && typeof value.continued === "boolean";
+      }
+      return Object.freeze({ move, spawn, canMove, validState });
+    })();
+  </script>
+  <script id="game-app">
+    (() => {
+      "use strict";
+      const Game = window.Ride2048;
+      const $ = id => document.getElementById(id);
+      const key = "way-home-2048-v1";
+      const format = value => value.toLocaleString("ko-KR");
+      const copy = value => ({ ...value, cells: [...value.cells] });
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      let state, previous = null, best = 0, busy = false, queued = null, pointer = null, overlayMode = null;
+      const slots = Array.from({ length: 16 }, (_, index) => {
+        const cell = document.createElement("div");
+        cell.className = "slot";
+        cell.setAttribute("role", "gridcell");
+        cell.setAttribute("aria-rowindex", Math.floor(index / 4) + 1);
+        cell.setAttribute("aria-colindex", index % 4 + 1);
+        $("slots").append(cell);
+        return cell;
+      });
+      function fresh() {
+        const value = { cells: Array(16).fill(0), score: 0, moves: 0, continued: false };
+        Game.spawn(value.cells); Game.spawn(value.cells);
+        return value;
+      }
+      function load() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(key));
+          if (saved && Game.validState(saved.state)) {
+            state = copy(saved.state);
+            previous = Game.validState(saved.previous) ? copy(saved.previous) : null;
+            best = Number.isSafeInteger(saved.best) && saved.best >= 0 ? Math.max(saved.best, state.score) : state.score;
+          }
+        } catch { /* A new game also works when storage is unavailable or damaged. */ }
+        if (!state) state = fresh();
+      }
+      function save() {
+        best = Math.max(best, state.score);
+        try {
+          localStorage.setItem(key, JSON.stringify({ state, previous, best }));
+          $("save-status").textContent = "진행 자동 저장";
+        } catch {
+          $("save-status").textContent = "이 환경에서는 저장 불가";
+        }
+      }
+      function announce(message) { $("announcement").textContent = message; }
+      function render(newIndex = -1, merged = []) {
+        $("tiles").replaceChildren();
+        state.cells.forEach((value, index) => {
+          slots[index].setAttribute("aria-label", `${Math.floor(index / 4) + 1}행 ${index % 4 + 1}열: ${value || "빈칸"}`);
+          if (!value) return;
+          const tile = document.createElement("div");
+          tile.className = "tile" + (value >= 128 ? " large" : "") + (value > 2048 ? " super" : "") + (index === newIndex ? " new" : "") + (merged.includes(index) ? " merged" : "");
+          tile.dataset.value = value;
+          tile.dataset.index = index;
+          tile.style.gridRow = Math.floor(index / 4) + 1;
+          tile.style.gridColumn = index % 4 + 1;
+          tile.textContent = value;
+          $("tiles").append(tile);
+        });
+        $("score").textContent = format(state.score);
+        $("best").textContent = format(best);
+        $("undo").disabled = !previous;
+        $("move-count").textContent = `${format(state.moves)}번 이동`;
+        const max = Math.max(...state.cells);
+        const stops = [...document.querySelectorAll("[data-stop]")];
+        const current = stops.filter(stop => Number(stop.dataset.stop) <= max).at(-1);
+        stops.forEach(stop => {
+          stop.classList.toggle("reached", Number(stop.dataset.stop) <= max);
+          stop.classList.toggle("current", stop === current);
+        });
+        $("journey-label").textContent = max >= 2048 ? "도착! 조금 더 달려볼까요?" : max >= 1024 ? "집까지 한 정거장 남았어요" : max >= 128 ? `다음 역은 ${max * 2}입니다` : "천천히, 출발해 볼까요?";
+        renderOverlay();
+      }
+      function renderOverlay() {
+        const won = Math.max(...state.cells) >= 2048 && !state.continued;
+        const over = !Game.canMove(state.cells);
+        const mode = won ? "won" : over ? "over" : null;
+        const changed = mode !== overlayMode;
+        overlayMode = mode;
+        $("overlay").hidden = !mode;
+        // Keep the underlying controls available to assistive technology only while playing.
+        $("board").inert = Boolean(mode);
+        if (!mode) return;
+        $("overlay-icon").textContent = won ? "⌂" : "↟";
+        $("overlay-title").textContent = won ? "2048역에 도착했어요!" : "이번 여정은 여기까지";
+        $("overlay-copy").textContent = won ? `수고했어요. ${format(state.score)}점과 함께 도착! 더 큰 숫자에 도전해도 좋아요.` : `${format(state.moves)}번 움직여 ${format(state.score)}점을 모았어요. 잠깐 쉬고, 다시 출발해요.`;
+        $("overlay-primary").textContent = won ? "조금 더 달릴래요" : "다시 출발하기";
+        $("overlay-secondary").hidden = won || !previous;
+        if (changed) {
+          announce($("overlay-title").textContent + " " + $("overlay-copy").textContent);
+          $("overlay-primary").focus({ preventScroll: true });
+        }
+      }
+      function move(direction) {
+        if ($("restart-dialog").open || $("help-dialog").open || overlayMode) return;
+        if (busy) { queued = direction; return; }
+        const result = Game.move(state.cells, direction);
+        if (!result.changed) {
+          announce("이 방향으로는 움직일 수 없어요. 다른 방향을 시도해 보세요.");
+          return;
+        }
+        busy = true;
+        previous = copy(state);
+        state.cells = result.cells;
+        state.score += result.gained;
+        state.moves++;
+        const newIndex = Game.spawn(state.cells);
+        save();
+        const firstSlot = slots[0].getBoundingClientRect(), nextSlot = slots[1].getBoundingClientRect();
+        const step = nextSlot.left - firstSlot.left;
+        result.travels.forEach(({ from, to }) => {
+          const tile = $("tiles").querySelector(`[data-index="${from}"]`);
+          if (tile) tile.style.transform = `translate(${(to % 4 - from % 4) * step}px, ${(Math.floor(to / 4) - Math.floor(from / 4)) * step}px)`;
+        });
+        window.setTimeout(() => {
+          render(newIndex, result.merged);
+          busy = false;
+          if (result.gained) {
+            $("score-gain").textContent = `+${format(result.gained)}`;
+            $("score-gain").classList.remove("show");
+            void $("score-gain").offsetWidth;
+            $("score-gain").classList.add("show");
+          }
+          if (!overlayMode) announce(`${{ left: "왼쪽으로", right: "오른쪽으로", up: "위로", down: "아래로" }[direction]} 이동. ${result.gained ? `${result.gained}점 획득. ` : ""}현재 ${state.score}점.`);
+          const next = queued;
+          queued = null;
+          if (next) move(next);
+        }, reducedMotion.matches ? 0 : 115);
+      }
+      function undo() {
+        if (!previous || busy) return;
+        const keepPlaying = state.continued;
+        state = copy(previous);
+        state.continued = state.continued || keepPlaying;
+        previous = null; queued = null;
+        save(); render();
+        announce("한 수 되돌렸어요.");
+        $("board").focus({ preventScroll: true });
+      }
+      function restart() {
+        if (busy) return;
+        state = fresh(); previous = null; queued = null;
+        save(); render();
+        announce("새 여정이 시작됐어요. 같은 숫자를 합쳐 보세요.");
+        $("board").focus({ preventScroll: true });
+      }
+      document.querySelectorAll("[data-direction]").forEach(button => button.addEventListener("click", () => move(button.dataset.direction)));
+      $("undo").addEventListener("click", undo);
+      $("new-game").addEventListener("click", () => { if (!busy) $("restart-dialog").showModal(); });
+      $("cancel-restart").addEventListener("click", () => $("restart-dialog").close());
+      $("confirm-restart").addEventListener("click", () => { $("restart-dialog").close(); restart(); });
+      $("help").addEventListener("click", () => $("help-dialog").showModal());
+      $("close-help").addEventListener("click", () => $("help-dialog").close());
+      $("overlay-primary").addEventListener("click", () => {
+        if (overlayMode === "won") {
+          state.continued = true;
+          if (previous) previous.continued = true;
+          save(); render(); $("board").focus({ preventScroll: true });
+        } else restart();
+      });
+      $("overlay-secondary").addEventListener("click", undo);
+      document.addEventListener("keydown", event => {
+        if (event.altKey || event.ctrlKey || event.metaKey || event.target.closest("input, textarea, select, [contenteditable=true]") || $("restart-dialog").open || $("help-dialog").open) return;
+        const direction = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down", a: "left", d: "right", w: "up", s: "down" }[event.key];
+        if (direction && !overlayMode) { event.preventDefault(); move(direction); }
+      });
+      $("board").addEventListener("pointerdown", event => {
+        if (!event.isPrimary || event.button !== 0) return;
+        pointer = { x: event.clientX, y: event.clientY, id: event.pointerId };
+        $("board").setPointerCapture(event.pointerId);
+      });
+      $("board").addEventListener("pointerup", event => {
+        if (!pointer || event.pointerId !== pointer.id) return;
+        const dx = event.clientX - pointer.x, dy = event.clientY - pointer.y;
+        pointer = null;
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 22) return;
+        move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "right" : "left") : (dy > 0 ? "down" : "up"));
+      });
+      $("board").addEventListener("pointercancel", () => { pointer = null; });
+      $("board").addEventListener("lostpointercapture", () => { pointer = null; });
+      load(); save(); render();
+    })();
+  </script>
+</body>
+</html>
