@@ -162,7 +162,7 @@
 </head>
 <body>
   <div class="shell">
-    <header class="topbar"><a class="wordmark" href="./"><span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span> LITTLE ARCADE</a><a class="top-link" href="./">페이지 목록 ↗</a></header>
+    <header class="topbar"><a class="wordmark" href="games.html"><span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span> LITTLE ARCADE</a><a class="top-link" href="games.html">모든 게임 ↗</a></header>
     <main>
       <section class="intro" aria-labelledby="intro-title">
         <div class="edition">SLOW GAMES FOR THE WAY HOME · 02</div>
@@ -371,7 +371,7 @@
       function save() {
         if (data.mode === "daily") data.dailyBest.score = Math.max(data.dailyBest.score, state().score);
         else data.best = Math.max(data.best, state().score);
-        try { localStorage.setItem(storageKey, JSON.stringify(data)); $("save-status").textContent = `진행 자동 저장 · 소리 ${data.sound ? "ON" : "OFF"}`; }
+        try { localStorage.setItem(storageKey, JSON.stringify(data)); localStorage.setItem("little-arcade:last", JSON.stringify({id:"night",at:Date.now()})); $("save-status").textContent = `진행 자동 저장 · 소리 ${data.sound ? "ON" : "OFF"}`; }
         catch { $("save-status").textContent = "이 환경에서는 자동 저장 불가"; }
       }
       const cells = [];

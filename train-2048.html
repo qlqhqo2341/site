@@ -145,11 +145,11 @@
 <body>
   <div class="shell">
     <header class="topbar">
-      <a class="brand" href="./" aria-label="페이지 목록으로">
+      <a class="brand" href="games.html" aria-label="모든 게임으로">
         <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="6" y="3" width="20" height="23" rx="6" stroke="currentColor" stroke-width="2"/><path d="M7 16h18M11 8h10M11 26l-3 4m13-4 3 4" stroke="currentColor" stroke-width="2"/><circle cx="11" cy="21" r="1.5" fill="currentColor"/><circle cx="21" cy="21" r="1.5" fill="currentColor"/></svg>
         귀가선 <small>THE WAY HOME</small>
       </a>
-      <a class="home-link" href="./">페이지 목록 ↗</a>
+      <a class="home-link" href="games.html">모든 게임 ↗</a>
     </header>
     <main>
       <section class="intro" aria-labelledby="page-title">
@@ -314,6 +314,7 @@
         best = Math.max(best, state.score);
         try {
           localStorage.setItem(key, JSON.stringify({ state, previous, best }));
+          localStorage.setItem("little-arcade:last", JSON.stringify({id:"train",at:Date.now()}));
           $("save-status").textContent = "진행 자동 저장";
         } catch {
           $("save-status").textContent = "이 환경에서는 저장 불가";
