@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10171d">
+  <meta name="description" content="복잡한 하루를 한 줄씩 비우는 블록 퍼즐. 조각을 놓고 가로와 세로를 채워 보세요. 시간 제한 없이, 오늘의 30수에도 도전할 수 있어요.">
+  <title>밤의 조각 · Night Pieces</title>
+  <style>
+    :root { color-scheme: dark; --bg: #10171d; --surface: #192229; --panel: #1d2830; --line: #2d3a43; --text: #f0eee8; --muted: #96a5af; --mint: #a9d6c2; --lilac: #b8adf0; --gap: 4px; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 80% 10%, #6e648716, transparent 50%), radial-gradient(ellipse at 0 85%, #42625818, transparent 50%); z-index: -1; }
+    button, a { touch-action: manipulation; }
+    button { color: inherit; font: inherit; cursor: pointer; }
+    button:disabled { cursor: default; opacity: .35; }
+    button:focus-visible, a:focus-visible { outline: 2px solid var(--lilac); outline-offset: 4px; }
+    a { color: inherit; }
+    [hidden] { display: none !important; }
+    .shell { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
+    .topbar { min-height: 86px; border-bottom: 1px solid #ffffff0c; display: flex; align-items: center; justify-content: space-between; }
+    .wordmark { text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 11px; font-weight: 700; letter-spacing: 2.2px; }
+    .logo { display: grid; grid-template-columns: 7px 7px; gap: 3px; transform: rotate(-7deg); }
+    .logo i { height: 7px; background: var(--lilac); border-radius: 1.5px; }
+    .logo i:last-child { background: var(--mint); }
+    .top-link { color: var(--muted); font-size: 11px; text-decoration: none; padding: 15px 0 15px 15px; }
+    main { display: grid; grid-template-columns: 1fr 450px; align-items: center; gap: 85px; padding: 36px 0; }
+    .edition { display: inline-flex; align-items: center; gap: 10px; color: var(--muted); font-size: 10px; letter-spacing: 1.5px; }
+    .edition::before { content: ""; width: 20px; height: 1px; background: var(--lilac); }
+    .intro h1 { font-size: clamp(40px, 4.5vw, 55px); line-height: 1.38; letter-spacing: -2.9px; font-weight: 650; margin: 25px 0 22px; }
+    .intro h1 em { font-style: normal; color: var(--mint); }
+    .intro > p { color: var(--muted); font-size: 13px; line-height: 2; word-break: keep-all; }
+    .art { height: 106px; margin: 40px 0 37px; display: flex; align-items: center; gap: 16px; }
+    .art-shape { display: grid; grid-template-columns: repeat(3, 20px); grid-template-rows: repeat(3, 20px); gap: 4px; transform: rotate(-9deg); }
+    .art-shape:nth-child(2) { transform: rotate(8deg) translateY(18px); margin: 0 9px; }
+    .art-shape:nth-child(3) { transform: rotate(-5deg) translateY(-8px); }
+    .art-shape i { border-radius: 4px; background: var(--lilac); box-shadow: inset 0 1px 0 #ffffff55, inset 0 -3px 0 #00000018; }
+    .art-shape:nth-child(2) i { background: var(--mint); }
+    .art-shape:nth-child(3) i { background: #e4ba8c; }
+    .feature { display: flex; gap: 15px; margin: 18px 0; align-items: flex-start; }
+    .feature > span { color: #697d88; font-size: 10px; padding-top: 3px; }
+    .feature strong { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+    .feature p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.7; }
+    .game { padding: 23px; border: 1px solid #34424b; background: linear-gradient(155deg, #1b252d, #162027 75%); border-radius: 24px; box-shadow: 0 24px 80px #00000025, inset 0 1px 0 #ffffff05; min-width: 0; }
+    .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 17px; }
+    .game-title strong { font-size: 22px; font-weight: 650; letter-spacing: -.8px; }
+    .game-title span { display: block; color: var(--muted); font-size: 8px; letter-spacing: 2.4px; margin-top: 4px; }
+    .header-actions { display: flex; gap: 7px; }
+    .icon-button { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid #ffffff12; background: transparent; border-radius: 50%; color: var(--muted); }
+    .icon-button svg { width: 16px; height: 16px; }
+    .icon-button[aria-pressed="true"] { color: var(--mint); border-color: #a9d6c24d; }
+    .mode-tabs { display: flex; background: #111a21; border-radius: 8px; padding: 4px; gap: 4px; margin-bottom: 20px; }
+    .mode-tab { flex: 1; border: 0; background: transparent; color: var(--muted); min-height: 34px; font-size: 11px; border-radius: 5px; }
+    .mode-tab[aria-pressed="true"] { background: #2e3d46; color: var(--text); box-shadow: 0 2px 5px #00000020; }
+    .mode-tab span { display: inline-block; margin-left: 5px; font-size: 8px; letter-spacing: .5px; color: var(--mint); }
+    .scoreboard { display: flex; align-items: end; justify-content: space-between; margin-bottom: 16px; padding: 0 2px; font-variant-numeric: tabular-nums; }
+    .score-label { font-size: 9px; color: var(--muted); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+    .score-current { position: relative; }
+    #score { font-size: 39px; line-height: 1.1; font-weight: 650; letter-spacing: -1.5px; }
+    #score-gain { position: absolute; left: calc(100% + 10px); bottom: 5px; font-size: 17px; color: var(--mint); opacity: 0; white-space: nowrap; }
+    #score-gain.show { animation: score-rise .8s ease-out; }
+    .score-aside { display: flex; gap: 24px; text-align: right; padding-bottom: 3px; }
+    .score-aside small { display: block; color: var(--muted); font-size: 9px; margin-bottom: 6px; }
+    .score-aside b { font-size: 17px; font-weight: 550; }
+    .board-heading { min-height: 24px; display: flex; align-items: start; justify-content: space-between; font-size: 10px; color: var(--muted); }
+    #board-message { color: var(--mint); }
+    .board-wrap { position: relative; }
+    .board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); gap: var(--gap); padding: 7px; background: #10191f; border: 1px solid #30404a; border-radius: 11px; aspect-ratio: 1; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+    .board-row { display: contents; }
+    .cell { border: 1px solid #26343e; border-radius: 4px; background: #1c2932; padding: 0; min-width: 0; position: relative; transition: background-color .13s, border-color .13s; }
+    .cell.filled, .mini-block, .ghost-block { background: var(--block); border-color: transparent; box-shadow: inset 0 1px 0 #ffffff55, inset 0 -3px 0 #0000001b, 0 1px 2px #00000015; }
+    .cell.filled::after { content: ""; position: absolute; inset: 3px; border: 1px solid #ffffff1a; border-radius: 2px; }
+    .cell.preview { background: color-mix(in srgb, var(--block) 38%, #17232a); border-color: var(--block); box-shadow: inset 0 0 0 1px var(--block); }
+    .cell.invalid { border-color: #e59c9c; box-shadow: inset 0 0 0 1px #e59c9c; }
+    .cell.will-clear { filter: brightness(1.2); box-shadow: inset 0 0 0 2px #f4f3decc, 0 0 9px #c4dfcb40; }
+    .cell.placed { animation: block-in .22s ease-out; }
+    .cell.clearing { animation: clear-out .32s ease-in forwards; }
+    .cell.cursor { outline: 2px solid #f0eee8; outline-offset: -3px; z-index: 1; }
+    .cell.anchor::before { content: ""; position: absolute; left: 3px; top: 3px; width: 6px; height: 6px; background: #fff9e5; border-radius: 50%; box-shadow: 0 0 5px #fff9e580; z-index: 2; }
+    #particles { position: absolute; inset: 0; pointer-events: none; width: 100%; height: 100%; z-index: 4; }
+    .board-toast { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 5; opacity: 0; }
+    .board-toast div { text-align: center; padding: 17px 26px; background: #10191fe8; border: 1px solid #b8adf063; border-radius: 15px; box-shadow: 0 8px 30px #00000040; }
+    .board-toast b { font-size: 29px; letter-spacing: -.6px; color: #d3cbff; }
+    .board-toast span { display: block; margin-top: 6px; font-size: 11px; color: var(--muted); }
+    .board-toast.show { animation: toast-in 1.1s ease-out forwards; }
+    .tray-label { display: flex; justify-content: space-between; margin: 17px 1px 10px; font-size: 9px; color: var(--muted); }
+    .tray-label b { font-weight: 400; color: #bac7cd; }
+    .tray { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    .piece-card { min-height: 92px; padding: 10px; background: #121d25; border: 1px solid #2c3b45; border-radius: 10px; display: grid; place-items: center; touch-action: none; user-select: none; -webkit-user-select: none; position: relative; transition: border-color .15s, background-color .15s; }
+    .piece-card.selected { border-color: #b8adf0; background: #242d3b; box-shadow: inset 0 0 0 1px #b8adf02b; }
+    .piece-card.unavailable { opacity: .42; }
+    .piece-card.used { border-style: dashed; border-color: #283640; background: transparent; color: #4b626d; cursor: default; }
+    .piece-card.used span { font-size: 16px; font-weight: 300; }
+    .mini-piece { display: grid; gap: 3px; pointer-events: none; }
+    .mini-block { width: 13px; height: 13px; border-radius: 2.5px; }
+    .piece-index { position: absolute; top: 6px; left: 8px; font-size: 8px; color: #738894; }
+    .piece-card.selected .piece-index { color: #c9bff6; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr 1fr 43px; gap: 6px; margin-top: 12px; }
+    .control { border: 1px solid #34434d; border-radius: 7px; background: transparent; color: #c1cdd3; min-height: 40px; font-size: 10px; display: flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; padding: 5px; }
+    .control svg { width: 13px; height: 13px; flex-shrink: 0; }
+    .control:hover:enabled, .icon-button:hover { background: #ffffff08; }
+    .control:active:enabled { transform: translateY(1px); }
+    .play-hint { min-height: 16px; margin: 14px 0 0; text-align: center; font-size: 10px; line-height: 1.6; color: #93a4ae; }
+    .daily-progress { height: 3px; background: #2a3942; border-radius: 5px; margin-top: 13px; overflow: hidden; }
+    .daily-progress span { display: block; height: 100%; background: var(--lilac); width: 0; transition: width .3s; }
+    .overlay { position: absolute; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; text-align: center; padding: 25px; border: 1px solid #4a5b65; border-radius: 11px; background: #142029ed; backdrop-filter: blur(8px); }
+    .end-icon { width: 41px; height: 41px; display: grid; place-items: center; border-radius: 50%; border: 1px solid #a9d6c260; color: var(--mint); font-size: 20px; margin: 0 auto 14px; }
+    .overlay h2 { margin: 0 0 10px; font-size: 25px; letter-spacing: -.9px; font-weight: 600; }
+    .overlay p { color: #acbcc4; font-size: 12px; line-height: 1.8; margin: 0 0 16px; }
+    .end-score { color: var(--mint); font-size: 36px; font-weight: 600; letter-spacing: -1px; margin: 12px 0 18px; }
+    .end-score small { font-size: 12px; font-weight: 400; letter-spacing: 0; }
+    .overlay-actions { display: grid; gap: 8px; }
+    .primary, .secondary { border-radius: 8px; min-height: 43px; padding: 10px 18px; font-size: 12px; font-weight: 600; }
+    .primary { background: var(--mint); border: 1px solid var(--mint); color: #18372d; }
+    .secondary { background: transparent; border: 1px solid #45575f; color: #d9e0df; }
+    .ghost { position: fixed; display: grid; pointer-events: none; z-index: 100; opacity: .94; filter: drop-shadow(0 8px 10px #00000060); gap: 4px; }
+    .ghost-block { border-radius: 4px; }
+    footer { border-top: 1px solid #ffffff0c; padding: 19px 0 25px; display: flex; justify-content: space-between; gap: 15px; color: #748892; font-size: 9px; letter-spacing: .3px; }
+    .saved { display: inline-flex; align-items: center; gap: 6px; }
+    .saved::before { content: ""; width: 4px; height: 4px; border-radius: 50%; background: var(--mint); }
+    dialog { border: 1px solid #44545e; background: #1a252d; color: var(--text); padding: 26px; border-radius: 18px; width: min(380px, calc(100% - 32px)); box-shadow: 0 20px 80px #00000050; }
+    dialog::backdrop { background: #080f16b8; backdrop-filter: blur(6px); }
+    dialog h2 { font-size: 23px; font-weight: 600; letter-spacing: -1px; margin: 0 0 14px; }
+    dialog p { color: #a9b9c2; font-size: 12px; line-height: 1.9; margin: 0 0 17px; }
+    .help-steps { counter-reset: step; padding: 0; margin: 22px 0; list-style: none; }
+    .help-steps li { counter-increment: step; display: flex; gap: 13px; color: #b4c3cb; font-size: 12px; line-height: 1.8; margin: 16px 0; }
+    .help-steps li::before { content: "0" counter(step); color: var(--mint); font-size: 10px; margin-top: 2px; }
+    .help-example { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; margin: 20px 0 8px; }
+    .help-example i { aspect-ratio: 1; border-radius: 3px; background: var(--mint); box-shadow: inset 0 1px 0 #ffffff55, inset 0 -3px 0 #00000018; }
+    .help-example i:nth-child(6), .help-example i:nth-child(7), .help-example i:nth-child(8) { background: var(--lilac); }
+    .dialog-actions { display: flex; gap: 8px; }
+    .dialog-actions button { flex: 1; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    @keyframes block-in { 0% { scale: .7; filter: brightness(1.3); } 65% { scale: 1.07; } 100% { scale: 1; filter: brightness(1); } }
+    @keyframes clear-out { 0% { scale: 1; filter: brightness(1.8); } 40% { scale: 1.05; } 100% { scale: .15; opacity: 0; } }
+    @keyframes score-rise { 0% { opacity: 1; transform: translateY(4px); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-23px); } }
+    @keyframes toast-in { 0% { opacity: 0; transform: translateY(8px) scale(.93); } 15%, 72% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-10px); } }
+    @media (max-width: 940px) and (min-width: 701px) { main { grid-template-columns: 1fr 410px; gap: 30px; } .intro h1 { font-size: 39px; } .shell { padding: 0 24px; } .game { padding: 19px; } .art { gap: 5px; } .art-shape { grid-template-columns: repeat(3, 16px); grid-template-rows: repeat(3, 16px); } }
+    @media (max-width: 700px) {
+      .shell { max-width: 470px; padding: 0 16px; }
+      .topbar { min-height: 57px; }
+      .wordmark { font-size: 9px; gap: 10px; }
+      .top-link { font-size: 10px; }
+      main { display: block; padding: 18px 0 22px; }
+      .intro { display: none; }
+      .game { padding: 17px; border-radius: 19px; }
+      .game-header { margin-bottom: 15px; }
+      .game-title strong { font-size: 21px; }
+      .mode-tabs { margin-bottom: 17px; }
+      #score { font-size: 35px; }
+      .scoreboard { margin-bottom: 13px; }
+      .score-aside { gap: 20px; }
+      .piece-card { min-height: 86px; padding: 8px; }
+      .mini-block { width: 12px; height: 12px; }
+      .tray { gap: 7px; }
+      .tray-label { margin-top: 15px; }
+      footer { padding: 16px 0 max(21px, env(safe-area-inset-bottom)); font-size: 8px; }
+    }
+    @media (max-width: 370px) { .shell { padding: 0 10px; } .game { padding: 12px; } .controls { grid-template-columns: 1fr 1fr 1fr 33px; gap: 5px; } .control { font-size: 9px; gap: 3px; } .board { gap: 3px; padding: 5px; } .mini-block { width: 10px; height: 10px; } .mini-piece { gap: 2px; } .piece-card { min-height: 76px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .board-toast.show { opacity: 1; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar"><a class="wordmark" href="./"><span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span> LITTLE ARCADE</a><a class="top-link" href="./">페이지 목록 ↗</a></header>
+    <main>
+      <section class="intro" aria-labelledby="intro-title">
+        <div class="edition">SLOW GAMES FOR THE WAY HOME · 02</div>
+        <h1 id="intro-title">복잡한 하루는,<br><em>한 줄씩 비워요.</em></h1>
+        <p>잘 맞는 자리에 조각 하나.<br>조금 비워진 마음으로 집에 도착하길.</p>
+        <div class="art" aria-hidden="true">
+          <div class="art-shape"><i style="grid-area:1/1"></i><i style="grid-area:2/1"></i><i style="grid-area:3/1"></i><i style="grid-area:3/2"></i></div>
+          <div class="art-shape"><i style="grid-area:1/2"></i><i style="grid-area:2/1"></i><i style="grid-area:2/2"></i><i style="grid-area:2/3"></i></div>
+          <div class="art-shape"><i style="grid-area:1/1"></i><i style="grid-area:1/2"></i><i style="grid-area:2/1"></i><i style="grid-area:2/2"></i></div>
+        </div>
+        <div class="feature"><span>01</span><div><strong>서두르지 않아도 돼요</strong><p>타이머 없이, 내 속도로 즐기는 블록 퍼즐.</p></div></div>
+        <div class="feature"><span>02</span><div><strong>잘 비울수록, 더 기분 좋게</strong><p>여러 줄을 한 번에, 연속으로 지우면 보너스.</p></div></div>
+        <div class="feature"><span>03</span><div><strong>오늘만의 작은 도전</strong><p>매일 달라지는 시작 배치로 30수의 최고 기록에 도전.</p></div></div>
+      </section>
+      <section class="game" aria-label="밤의 조각 블록 퍼즐">
+        <div class="game-header">
+          <div class="game-title"><strong>밤의 조각</strong><span>NIGHT PIECES</span></div>
+          <div class="header-actions">
+            <button id="sound" class="icon-button" type="button" aria-label="소리 켜기" aria-pressed="false" title="소리 켜기">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m9 4-4 3H2v6h3l4 3V4Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path id="sound-waves" d="m13 7 5 6m0-6-5 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </button>
+            <button id="help" class="icon-button" type="button" aria-label="게임 방법" title="게임 방법">?</button>
+          </div>
+        </div>
+        <div class="mode-tabs" role="group" aria-label="게임 모드"><button class="mode-tab" data-mode="endless" aria-pressed="true" type="button">느긋하게</button><button class="mode-tab" data-mode="daily" aria-pressed="false" type="button">오늘의 30수 <span>DAILY</span></button></div>
+        <div class="scoreboard">
+          <div><div class="score-label">지금 모은 점수</div><div class="score-current"><strong id="score">0</strong><span id="score-gain" aria-hidden="true"></span></div></div>
+          <div class="score-aside"><div><small id="best-label">최고 기록</small><b id="best">0</b></div><div><small>지운 줄</small><b id="lines">0</b></div></div>
+        </div>
+        <div class="board-heading"><span id="board-message" aria-live="polite">작은 조각부터, 천천히.</span><span id="turn">0수</span></div>
+        <div class="board-wrap">
+          <div id="board" class="board" role="grid" aria-label="8행 8열 블록 퍼즐. 조각을 고르고 놓을 칸을 누르세요." aria-describedby="play-hint"></div>
+          <canvas id="particles" aria-hidden="true"></canvas>
+          <div id="board-toast" class="board-toast" aria-hidden="true"><div><b id="toast-title"></b><span id="toast-subtitle"></span></div></div>
+          <div id="overlay" class="overlay" hidden>
+            <div><div class="end-icon" aria-hidden="true">✧</div><h2 id="end-title"></h2><p id="end-copy"></p><div class="end-score"><span id="end-score">0</span> <small>점</small></div><div class="overlay-actions"><button id="end-undo" class="secondary" type="button">한 수 되돌리기</button><button id="end-restart" class="primary" type="button">한 번 더 시작</button></div></div>
+          </div>
+        </div>
+        <div id="daily-progress" class="daily-progress" role="progressbar" aria-label="오늘의 30수 진행" aria-valuemin="0" aria-valuemax="30" aria-valuenow="0" hidden><span></span></div>
+        <div class="tray-label"><span>이번 조각 <b id="hand-label">· 1번째 묶음</b></span><span>3개를 다 쓰면 새 조각</span></div>
+        <div id="tray" class="tray" role="group" aria-label="놓을 블록 조각 3개"></div>
+        <div class="controls">
+          <button id="rotate" class="control" type="button"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M13 5a5.5 5.5 0 1 0 1.2 6M13 1.8V5H9.7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>회전</button>
+          <button id="hint" class="control" type="button"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M6 12c0-2-2-2-2-5a5 5 0 0 1 10 0c0 3-2 3-2 5H6Zm1 3h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>자리 보기</button>
+          <button id="undo" class="control" type="button" disabled><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="m6 3-4 4 4 4M3 7h7a5 5 0 0 1 0 10" transform="translate(0 -2)" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>되돌리기</button>
+          <button id="restart" class="control" type="button" aria-label="새 게임" title="새 게임"><svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M14.5 7A6 6 0 1 0 15 11M14.5 2.5V7H10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+        <p id="play-hint" class="play-hint">조각을 끌어 놓거나, 조각을 고른 뒤 빈칸을 톡.</p>
+        <div id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+      </section>
+    </main>
+    <footer><span>조금씩 놓고, 가볍게 돌아가요.</span><span id="save-status" class="saved">진행 자동 저장 · 소리는 기본 OFF</span></footer>
+  </div>
+  <div id="ghost" class="ghost" aria-hidden="true" hidden></div>
+  <dialog id="help-dialog" aria-labelledby="help-title">
+    <h2 id="help-title">놓고, 채우고, 비우기.</h2>
+    <div class="help-example" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <ol class="help-steps"><li>아래 조각을 끌어 놓으세요. 조각을 고른 뒤 칸을 눌러도 돼요. 누른 칸은 조각의 왼쪽 위 기준이에요.</li><li>가로 또는 세로 8칸을 채우면 한 줄이 사라져요. 놓기 전에 밝게 빛나는 줄을 확인하세요.</li><li>한 번에 여러 줄을 지우거나, 연속된 수에 줄을 지우면 보너스! 판을 전부 비우면 200점이 더해져요.</li><li>조각을 모두 쓰면 새 조각이 나와요. 남은 어떤 조각도 회전해서 놓을 수 없으면 여정이 끝나요.</li></ol>
+    <p>‘느긋하게’는 시간·수 제한이 없어요. ‘오늘의 30수’는 매일 같은 시작 배치와 난수 시드로 30번 놓아 점수를 겨뤄요. 기록은 내 브라우저에 남아요.</p>
+    <p>키보드: 1–3 조각 선택 · 방향키 위치 · R 회전 · Enter 놓기. 되돌리기는 직전 한 수까지 가능해요.</p>
+    <button id="close-help" class="primary" type="button" style="width:100%">좋아요, 해볼게요</button>
+  </dialog>
+  <dialog id="restart-dialog" aria-labelledby="restart-title"><h2 id="restart-title">새로 시작할까요?</h2><p>이 모드의 진행 상황은 초기화돼요.<br>최고 기록과 다른 모드의 진행은 그대로 남아요.</p><div class="dialog-actions"><button id="cancel-restart" class="secondary" type="button" autofocus>이어 할래요</button><button id="confirm-restart" class="primary" type="button">새로 시작</button></div></dialog>
+  <script id="puzzle-engine">
+    "use strict";
+    window.NightPieces = (() => {
+      const SHAPES = [
+        [[0,0]], [[0,0],[1,0]], [[0,0],[1,0],[2,0]], [[0,0],[0,1],[1,1]],
+        [[0,0],[1,0],[0,1],[1,1]], [[0,0],[1,0],[2,0],[3,0]],
+        [[0,0],[0,1],[0,2],[1,2]], [[0,0],[1,0],[2,0],[1,1]],
+        [[1,0],[2,0],[0,1],[1,1]], [[0,0],[1,0],[2,0],[3,0],[4,0]],
+        [[0,0],[0,1],[0,2],[1,2],[2,2]], [[0,0],[1,0],[0,1],[1,1],[0,2],[1,2]],
+        [[1,0],[0,1],[1,1],[2,1],[1,2]], [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],[1,2],[2,2]]
+      ];
+      const COLORS = ["#b6a4dd", "#95c7b1", "#dfb485", "#88b7cd", "#d59da7", "#c2cb92"];
+      const POOL = [0,1,1,2,2,3,3,4,4,5,6,6,7,7,8,9,10,11,12,13];
+      const nextSeed = seed => (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      function shape(piece) {
+        let cells = SHAPES[piece.id].map(cell => [...cell]);
+        for (let n = 0; n < piece.turn; n++) {
+          const h = Math.max(...cells.map(cell => cell[1])) + 1;
+          cells = cells.map(([x,y]) => [h - 1 - y, x]);
+        }
+        return { cells, w: Math.max(...cells.map(cell => cell[0])) + 1, h: Math.max(...cells.map(cell => cell[1])) + 1 };
+      }
+      function fits(board, piece, row, col) {
+        return Number.isInteger(row) && Number.isInteger(col) && shape(piece).cells.every(([x,y]) => row + y >= 0 && row + y < 8 && col + x >= 0 && col + x < 8 && !board[(row + y) * 8 + col + x]);
+      }
+      function findPlacement(board, piece, allRotations = true) {
+        for (let n = 0; n < (allRotations ? 4 : 1); n++) {
+          const rotated = { ...piece, turn: (piece.turn + n) % 4 }, size = shape(rotated);
+          for (let row = 0; row <= 8 - size.h; row++) for (let col = 0; col <= 8 - size.w; col++) if (fits(board, rotated, row, col)) return { piece: rotated, row, col };
+        }
+        return null;
+      }
+      function linesOf(board) {
+        const rows = [], cols = [], indices = new Set();
+        for (let n = 0; n < 8; n++) {
+          if (Array.from({ length: 8 }, (_, x) => board[n * 8 + x]).every(Boolean)) rows.push(n);
+          if (Array.from({ length: 8 }, (_, y) => board[y * 8 + n]).every(Boolean)) cols.push(n);
+        }
+        rows.forEach(row => { for (let col = 0; col < 8; col++) indices.add(row * 8 + col); });
+        cols.forEach(col => { for (let row = 0; row < 8; row++) indices.add(row * 8 + col); });
+        return { count: rows.length + cols.length, indices: [...indices] };
+      }
+      function place(board, piece, row, col, combo = 0) {
+        if (!fits(board, piece, row, col)) return null;
+        const placed = [...board], added = shape(piece).cells.map(([x,y]) => (row + y) * 8 + col + x);
+        added.forEach(index => { placed[index] = piece.id % COLORS.length + 1; });
+        const clear = linesOf(placed), result = [...placed];
+        clear.indices.forEach(index => { result[index] = 0; });
+        const streak = clear.count ? combo + 1 : 0;
+        const perfect = clear.count > 0 && result.every(value => !value);
+        const points = added.length * 5 + clear.count * 80 + clear.count * (clear.count - 1) * 40 + Math.max(0, streak - 1) * clear.count * 25 + (perfect ? 200 : 0);
+        return { board: result, placed, added, clear, combo: streak, perfect, points };
+      }
+      function suggest(board, hand, preferred = -1) {
+        let best = null, bestValue = -Infinity;
+        const indices = hand[preferred] && findPlacement(board,hand[preferred]) ? [preferred] : [0,1,2];
+        for (const index of indices) {
+          if (!hand[index]) continue;
+          const seen = new Set();
+          for (let turn = 0; turn < 4; turn++) {
+            const piece = { ...hand[index], turn }, size = shape(piece);
+            const signature = size.cells.map(([x,y])=>`${x},${y}`).sort().join(";");
+            if (seen.has(signature)) continue;
+            seen.add(signature);
+            for (let row = 0; row <= 8-size.h; row++) for (let col = 0; col <= 8-size.w; col++) {
+              const result = place(board,piece,row,col);
+              if (!result) continue;
+              let potential = 0, holes = 0;
+              for (let n = 0; n < 8; n++) {
+                let across = 0, down = 0;
+                for (let m = 0; m < 8; m++) { across += Boolean(result.board[n*8+m]); down += Boolean(result.board[m*8+n]); }
+                potential += across*across + down*down;
+              }
+              result.board.forEach((value,i)=>{
+                if (!value && (i%8===0||result.board[i-1]) && (i%8===7||result.board[i+1]) && (i<8||result.board[i-8]) && (i>=56||result.board[i+8])) holes++;
+              });
+              const value = result.points*10 + result.clear.count*500 + potential*1.5 - holes*100;
+              if (value > bestValue) { bestValue = value; best = { index, piece, row, col }; }
+            }
+          }
+        }
+        return best;
+      }
+      function deal(board, seed) {
+        const hand = [];
+        for (let n = 0; n < 3; n++) {
+          seed = nextSeed(seed); const id = POOL[seed % POOL.length];
+          seed = nextSeed(seed); hand.push({ id, turn: seed % 4 });
+        }
+        // A fresh tray always offers at least one move, even late in a game.
+        if (!hand.some(piece => findPlacement(board, piece))) hand[0] = { id: 0, turn: 0 };
+        return { hand, seed };
+      }
+      function create(seed) {
+        const board = Array(64).fill(0);
+        // Small starting clusters make room planning interesting from the first move.
+        for (let n = 0; n < 3; n++) {
+          seed = nextSeed(seed); const piece = { id: [3,4,7][seed % 3], turn: (seed >>> 8) % 4 };
+          seed = nextSeed(seed); const row = 4 + seed % 2;
+          seed = nextSeed(seed); const col = seed % 6;
+          if (fits(board, piece, row, col)) {
+            const indices = shape(piece).cells.map(([x,y]) => (row + y) * 8 + col + x);
+            indices.forEach(index => { board[index] = n + 1; });
+            if (linesOf(board).count) indices.forEach(index => { board[index] = 0; });
+          }
+        }
+        const drawn = deal(board, seed);
+        return { board, hand: drawn.hand, seed: drawn.seed, score: 0, moves: 0, lines: 0, combo: 0, hands: 1 };
+      }
+      function valid(state) {
+        return Boolean(state && Array.isArray(state.board) && state.board.length === 64 && state.board.every(n => Number.isInteger(n) && n >= 0 && n <= COLORS.length) && Array.isArray(state.hand) && state.hand.length === 3 && state.hand.some(Boolean) && state.hand.every(p => p === null || (p && Number.isInteger(p.id) && p.id >= 0 && p.id < SHAPES.length && Number.isInteger(p.turn) && p.turn >= 0 && p.turn < 4)) && ["score","moves","lines","combo","seed","hands"].every(k => Number.isSafeInteger(state[k]) && state[k] >= 0) && state.seed <= 4294967295 && state.hands >= 1 && linesOf(state.board).count === 0);
+      }
+      function hash(text) { let value = 2166136261; for (const char of text) value = Math.imul(value ^ char.charCodeAt(0), 16777619) >>> 0; return value; }
+      return Object.freeze({ SHAPES, COLORS, shape, fits, findPlacement, linesOf, place, suggest, deal, create, valid, hash });
+    })();
+  </script>
+  <script id="puzzle-app">
+    (() => {
+      "use strict";
+      const G = window.NightPieces, $ = id => document.getElementById(id), clone = value => JSON.parse(JSON.stringify(value));
+      const format = value => value.toLocaleString("ko-KR");
+      const storageKey = "night-pieces-v1", reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const now = new Date(), day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+      let data = { games: {}, best: 0, dailyBest: { day, score: 0 }, sound: false, mode: "endless" };
+      try {
+        const stored = JSON.parse(localStorage.getItem(storageKey));
+        if (stored && typeof stored === "object") {
+          for (const mode of ["endless","daily"]) {
+            const game = stored.games?.[mode];
+            if (game && G.valid(game.state) && (mode !== "daily" || game.day === day)) data.games[mode] = { day, state: game.state, previous: G.valid(game.previous) ? game.previous : null };
+          }
+          if (Number.isSafeInteger(stored.best) && stored.best >= 0) data.best = stored.best;
+          if (stored.dailyBest?.day === day && Number.isSafeInteger(stored.dailyBest.score) && stored.dailyBest.score >= 0) data.dailyBest = stored.dailyBest;
+          data.sound = stored.sound === true;
+          data.mode = stored.mode === "daily" ? "daily" : "endless";
+        }
+      } catch { /* Play remains available without local storage. */ }
+      let selected = 0, busy = false, ended = false, pointer = null, suppressClickUntil = 0, preview = null, cursor = 0, hintTimer, toastTimer, particleFrame, audio;
+      const game = () => data.games[data.mode], state = () => game().state;
+      function randomSeed() { const values = new Uint32Array(1); if (window.crypto?.getRandomValues) return window.crypto.getRandomValues(values)[0]; return Date.now() >>> 0; }
+      function ensureGame() { if (!data.games[data.mode]) data.games[data.mode] = { day, state: G.create(data.mode === "daily" ? G.hash(`night-pieces:${day}`) : randomSeed()), previous: null }; }
+      function announce(message) { $("announcement").textContent = message; }
+      function save() {
+        if (data.mode === "daily") data.dailyBest.score = Math.max(data.dailyBest.score, state().score);
+        else data.best = Math.max(data.best, state().score);
+        try { localStorage.setItem(storageKey, JSON.stringify(data)); $("save-status").textContent = `진행 자동 저장 · 소리 ${data.sound ? "ON" : "OFF"}`; }
+        catch { $("save-status").textContent = "이 환경에서는 자동 저장 불가"; }
+      }
+      const cells = [];
+      for (let row = 0; row < 8; row++) {
+        const line = document.createElement("div"); line.className = "board-row"; line.setAttribute("role", "row");
+        for (let col = 0; col < 8; col++) {
+          const cell = document.createElement("button"), index = row * 8 + col;
+          cell.type = "button"; cell.className = "cell"; cell.setAttribute("role", "gridcell"); cell.tabIndex = index === 0 ? 0 : -1;
+          cell.addEventListener("focus", () => { cursor = index; cells.forEach((item,n) => { item.tabIndex = n === cursor ? 0 : -1; }); });
+          cell.addEventListener("click", () => { cursor = index; attempt(row,col); });
+          cell.addEventListener("pointerenter", event => { if (event.pointerType === "mouse" && !pointer) showPreview(row,col); });
+          line.append(cell); cells.push(cell);
+        }
+        $("board").append(line);
+      }
+      $("board").addEventListener("pointerleave", () => { if (!pointer) clearPreview(); });
+      function color(piece) { return G.COLORS[piece.id % G.COLORS.length]; }
+      function isOver() { return (data.mode === "daily" && state().moves >= 30) || !state().hand.some(piece => piece && G.findPlacement(state().board, piece)); }
+      function renderBoard(board = state().board, added = [], clearing = []) {
+        const addSet = new Set(added), clearSet = new Set(clearing);
+        cells.forEach((cell,index) => {
+          cell.className = "cell" + (board[index] ? " filled" : "") + (addSet.has(index) ? " placed" : "") + (clearSet.has(index) ? " clearing" : "");
+          cell.style.setProperty("--block", G.COLORS[(board[index] || 1) - 1]);
+          cell.setAttribute("aria-label", `${Math.floor(index/8)+1}행 ${index%8+1}열, ${board[index] ? "블록 있음" : "빈칸"}`);
+          cell.tabIndex = cursor === index ? 0 : -1;
+        });
+      }
+      function miniature(piece, target, blockClass) {
+        const size = G.shape(piece);
+        target.style.gridTemplateColumns = `repeat(${size.w}, 1fr)`;
+        target.style.gridTemplateRows = `repeat(${size.h}, 1fr)`;
+        size.cells.forEach(([x,y]) => {
+          const block = document.createElement("i"); block.className = blockClass;
+          block.style.gridArea = `${y+1}/${x+1}`; block.style.setProperty("--block", color(piece)); target.append(block);
+        });
+      }
+      function renderTray() {
+        $("tray").replaceChildren();
+        state().hand.forEach((piece,index) => {
+          const card = document.createElement("button"); card.type = "button"; card.className = "piece-card"; card.dataset.index = index;
+          if (!piece) { card.classList.add("used"); card.disabled = true; card.setAttribute("aria-label", `${index+1}번 조각, 사용 완료`); const check = document.createElement("span"); check.textContent = "✓"; card.append(check); }
+          else {
+            const size = G.shape(piece), mini = document.createElement("div"), number = document.createElement("span");
+            mini.className = "mini-piece"; mini.setAttribute("aria-hidden","true"); miniature(piece,mini,"mini-block");
+            number.className = "piece-index"; number.textContent = `0${index+1}`; number.setAttribute("aria-hidden","true");
+            card.setAttribute("aria-label", `${index+1}번 조각, 가로 ${size.w} 세로 ${size.h}, ${size.cells.length}칸. 선택 후 빈칸에 놓으세요.`);
+            card.append(number,mini);
+            card.addEventListener("click", () => { if (performance.now() < suppressClickUntil || busy || ended) return; select(index); });
+            card.addEventListener("pointerdown", event => startPointer(event,index,card));
+            card.addEventListener("pointermove", movePointer);
+            card.addEventListener("pointerup", endPointer);
+            card.addEventListener("pointercancel", cancelPointer);
+            card.addEventListener("lostpointercapture", () => { if (pointer) cancelPointer(); });
+          }
+          $("tray").append(card);
+        });
+        updateSelection();
+      }
+      function updateSelection() {
+        [...$("tray").children].forEach((card,index) => {
+          card.classList.toggle("selected", selected === index && Boolean(state().hand[index]));
+          card.setAttribute("aria-pressed", String(selected === index && Boolean(state().hand[index])));
+          const piece = state().hand[index];
+          card.disabled = busy || ended || !piece;
+          card.classList.toggle("unavailable", Boolean(piece && !G.findPlacement(state().board,piece)));
+        });
+        $("rotate").disabled = busy || ended || !state().hand[selected];
+        $("hint").disabled = busy || ended;
+        $("undo").disabled = busy || !game().previous;
+      }
+      function renderStats() {
+        $("score").textContent = format(state().score);
+        $("best").textContent = format(data.mode === "daily" ? data.dailyBest.score : data.best);
+        $("best-label").textContent = data.mode === "daily" ? "오늘 최고" : "최고 기록";
+        $("lines").textContent = format(state().lines);
+        $("turn").textContent = data.mode === "daily" ? `${state().moves} / 30수` : `${format(state().moves)}수`;
+        $("hand-label").textContent = `· ${state().hands}번째 묶음`;
+        $("board-message").textContent = state().combo > 1 ? `${state().combo}연속 클리어 중 ✧` : data.mode === "daily" ? `${Number(day.slice(5,7))}월 ${Number(day.slice(8))}일의 작은 도전` : "작은 조각부터, 천천히.";
+        $("daily-progress").hidden = data.mode !== "daily";
+        $("daily-progress").setAttribute("aria-valuenow", state().moves);
+        $("daily-progress").firstElementChild.style.width = `${Math.min(100,state().moves/30*100)}%`;
+        document.querySelectorAll("[data-mode]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.mode === data.mode)));
+        $("sound").setAttribute("aria-pressed", String(data.sound));
+        $("sound").setAttribute("aria-label", data.sound ? "소리 끄기" : "소리 켜기");
+        $("sound").title = data.sound ? "소리 끄기" : "소리 켜기";
+        $("sound-waves").setAttribute("d", data.sound ? "M13 6c2 2 2 6 0 8m3-11c4 4 4 10 0 14" : "m13 7 5 6m0-6-5 6");
+      }
+      function renderEnd() {
+        const wasEnded = ended; ended = isOver();
+        $("overlay").hidden = !ended; $("board").inert = ended;
+        if (!ended) return;
+        const complete = data.mode === "daily" && state().moves >= 30;
+        $("end-title").textContent = complete ? "오늘의 30수, 완주!" : "충분히 잘 비워냈어요";
+        $("end-copy").textContent = complete ? `${state().lines}줄을 비운 오늘의 기록이에요. 같은 배치로 다시 도전할 수 있어요.` : `${state().moves}수 동안 ${state().lines}줄을 비웠어요. 남은 조각을 놓을 자리가 없네요.`;
+        $("end-score").textContent = format(state().score);
+        $("end-undo").hidden = !game().previous;
+        $("end-restart").textContent = data.mode === "daily" ? "같은 퍼즐에 다시 도전" : "한 번 더 시작";
+        if (!wasEnded) { announce(`${$("end-title").textContent}. ${state().score}점.`); $(game().previous ? "end-undo" : "end-restart").focus({ preventScroll: true }); }
+      }
+      function render() { clearPreview(); renderBoard(); renderStats(); renderEnd(); renderTray(); }
+      function select(index) {
+        if (busy || ended || !state().hand[index]) return;
+        selected = index; clearPreview(); updateSelection();
+        const size = G.shape(state().hand[index]);
+        $("play-hint").textContent = `${index+1}번 조각 선택 · 놓을 왼쪽 위 칸을 누르세요.`;
+        announce(`${index+1}번 조각 선택. 가로 ${size.w}, 세로 ${size.h}. 회전할 수 있어요.`);
+      }
+      function clearPreview() {
+        preview = null;
+        cells.forEach(cell => cell.classList.remove("preview","invalid","will-clear","cursor","anchor"));
+      }
+      function showPreview(row,col) {
+        clearPreview();
+        const piece = state().hand[selected]; if (!piece || busy || ended) return;
+        const valid = G.fits(state().board,piece,row,col);
+        preview = {row,col,valid};
+        G.shape(piece).cells.forEach(([x,y]) => {
+          if (row+y<0 || row+y>7 || col+x<0 || col+x>7) return;
+          const cell = cells[(row+y)*8+col+x];
+          if (!state().board[(row+y)*8+col+x]) cell.style.setProperty("--block",color(piece));
+          cell.classList.add(valid ? "preview" : "invalid");
+        });
+        if (valid) {
+          cells[row*8+col].classList.add("anchor");
+          const result = G.place(state().board,piece,row,col,state().combo);
+          result.clear.indices.forEach(index => cells[index].classList.add("will-clear"));
+        }
+      }
+      function rotate() {
+        if (busy || ended || pointer || !state().hand[selected]) return;
+        const old = preview; state().hand[selected].turn = (state().hand[selected].turn + 1)%4;
+        save(); renderTray(); if (old) showPreview(old.row,old.col);
+        announce("조각을 시계 방향으로 회전했어요."); tone("rotate");
+      }
+      function hint() {
+        if (busy || ended || pointer) return;
+        const found = G.suggest(state().board,state().hand,selected), index = found?.index;
+        if (!found) return;
+        selected = index; state().hand[index] = found.piece; cursor = found.row*8+found.col;
+        save(); renderTray(); showPreview(found.row,found.col);
+        $("play-hint").textContent = "작은 점이 있는 칸을 누르면 이 자리에 놓여요.";
+        announce(`${index+1}번 조각, ${found.row+1}행 ${found.col+1}열에 놓을 수 있어요.`);
+        clearTimeout(hintTimer); hintTimer = setTimeout(clearPreview,3000);
+      }
+      function attempt(row,col) {
+        if (busy || ended || pointer || $("help-dialog").open || $("restart-dialog").open) return;
+        const piece = state().hand[selected];
+        if (!piece) { $("play-hint").textContent = "먼저 아래에서 조각을 하나 골라 주세요."; announce($("play-hint").textContent); return; }
+        const result = G.place(state().board,piece,row,col,state().combo);
+        if (!result) { showPreview(row,col); $("play-hint").textContent = "조금 비켜 놓아 볼까요? 회전도 할 수 있어요."; announce("이 자리에는 놓을 수 없어요."); tone("invalid"); return; }
+        busy = true; clearTimeout(hintTimer); clearPreview();
+        game().previous = clone(state());
+        state().board = result.board; state().score += result.points; state().moves++; state().combo = result.combo; state().lines += result.clear.count;
+        state().hand[selected] = null;
+        if (state().hand.every(piece => !piece)) { const drawn = G.deal(state().board,state().seed); state().hand = drawn.hand; state().seed = drawn.seed; state().hands++; }
+        selected = -1; save(); renderStats(); renderTray();
+        renderBoard(result.placed,result.added,result.clear.indices);
+        $("score-gain").textContent = `+${format(result.points)}`; $("score-gain").classList.remove("show"); void $("score-gain").offsetWidth; $("score-gain").classList.add("show");
+        if (result.clear.count) {
+          burst(result.clear.indices); tone(result.perfect ? "perfect" : "clear",result.clear.count);
+          const title = result.perfect ? "ALL CLEAR" : result.clear.count > 1 ? `${result.clear.count} LINES` : result.combo > 1 ? `${result.combo} COMBO` : "NICE LINE";
+          const subtitle = result.perfect ? "남김없이 가벼워졌어요 · +200 보너스" : result.combo > 1 ? `연속 클리어 보너스 · +${format(result.points)}점` : `한결 가벼워졌어요 · +${format(result.points)}점`;
+          toast(title,subtitle);
+          $("play-hint").textContent = result.clear.count > 1 ? "여러 줄을 한 번에! 다음 자리도 찾아볼까요?" : "잘 비웠어요. 이 흐름 그대로 이어가요.";
+        } else { tone("place"); $("play-hint").textContent = "다음 조각을 골라 보세요. 회전하면 새 자리가 보여요."; }
+        announce(`${result.clear.count ? `${result.clear.count}줄 제거. ` : ""}${result.points}점 획득, 총 ${state().score}점.`);
+        setTimeout(() => {
+          busy = false; renderBoard(); renderEnd(); updateSelection();
+          if (document.activeElement === document.body || !document.activeElement?.isConnected) $("tray").querySelector("button:not(:disabled)")?.focus({ preventScroll: true });
+        }, reduced.matches ? 0 : result.clear.count ? 330 : 150);
+      }
+      function startPointer(event,index,card) {
+        if (!event.isPrimary || event.button !== 0 || busy || ended || pointer) return;
+        event.preventDefault(); select(index);
+        pointer = { id:event.pointerId, x:event.clientX, y:event.clientY, kind:event.pointerType, card, dragging:false };
+        card.setPointerCapture(event.pointerId);
+      }
+      function boardGeometry() {
+        const a = cells[0].getBoundingClientRect(), b = cells[1].getBoundingClientRect();
+        return {left:a.left,top:a.top,step:b.left-a.left,block:a.width};
+      }
+      function movePointer(event) {
+        if (!pointer || event.pointerId !== pointer.id) return;
+        if (!pointer.dragging && Math.hypot(event.clientX-pointer.x,event.clientY-pointer.y)<7) return;
+        const piece = state().hand[selected]; if (!piece) return;
+        const size = G.shape(piece), geo = boardGeometry(), width = size.w*geo.step-(geo.step-geo.block), height = size.h*geo.step-(geo.step-geo.block);
+        if (!pointer.dragging) {
+          pointer.dragging = true; $("ghost").replaceChildren(); miniature(piece,$("ghost"),"ghost-block");
+        }
+        const left = event.clientX-width/2, top = event.clientY-height-(pointer.kind === "touch" ? 58 : 12);
+        $("ghost").hidden = false; $("ghost").style.left = `${left}px`; $("ghost").style.top = `${top}px`; $("ghost").style.width = `${width}px`; $("ghost").style.height = `${height}px`; $("ghost").style.gap = `${geo.step-geo.block}px`;
+        showPreview(Math.round((top-geo.top)/geo.step),Math.round((left-geo.left)/geo.step));
+      }
+      function endPointer(event) {
+        if (!pointer || event.pointerId !== pointer.id) return;
+        const dragging = pointer.dragging, target = preview;
+        pointer = null; $("ghost").hidden = true; suppressClickUntil = performance.now()+400;
+        if (dragging && target?.valid) attempt(target.row,target.col);
+        else { clearPreview(); if (dragging) $("play-hint").textContent = "판 안의 빈자리에 조각을 놓아 주세요."; }
+      }
+      function cancelPointer() { pointer = null; $("ghost").hidden = true; clearPreview(); }
+      function toast(title,subtitle) {
+        clearTimeout(toastTimer); $("toast-title").textContent=title; $("toast-subtitle").textContent=subtitle;
+        $("board-toast").classList.remove("show"); void $("board-toast").offsetWidth; $("board-toast").classList.add("show");
+        toastTimer = setTimeout(() => $("board-toast").classList.remove("show"),1100);
+      }
+      function burst(indices) {
+        if (reduced.matches) return;
+        cancelAnimationFrame(particleFrame);
+        const canvas=$("particles"), rect=canvas.getBoundingClientRect(), dpr=Math.min(2,window.devicePixelRatio||1), ctx=canvas.getContext("2d");
+        if (!ctx) return;
+        canvas.width=rect.width*dpr; canvas.height=rect.height*dpr; ctx.scale(dpr,dpr);
+        const sparks=[];
+        indices.forEach(index => {
+          const cell=cells[index].getBoundingClientRect();
+          for (let n=0;n<3;n++) sparks.push({x:cell.left-rect.left+cell.width/2,y:cell.top-rect.top+cell.height/2,vx:(Math.random()-.5)*2.5,vy:-Math.random()*2.5-.5,color:G.COLORS[(state().board[index]||index)%G.COLORS.length],size:Math.random()*2+1});
+        });
+        const start=performance.now(); let last=start;
+        function frame(time) {
+          const age=(time-start)/650, step=Math.min(2,(time-last)/16.67); last=time; ctx.clearRect(0,0,rect.width,rect.height);
+          if (age>=1) return;
+          ctx.globalAlpha=Math.max(0,1-age);
+          sparks.forEach(spark=>{spark.x+=spark.vx*step;spark.y+=spark.vy*step;spark.vy+=.035*step;ctx.fillStyle=spark.color;ctx.fillRect(spark.x,spark.y,spark.size,spark.size);});
+          particleFrame=requestAnimationFrame(frame);
+        }
+        particleFrame=requestAnimationFrame(frame);
+      }
+      function tone(kind,amount=1) {
+        if (!data.sound) return;
+        const notes = kind === "clear" ? [523,659,784,1046].slice(0,Math.min(4,amount+2)) : kind === "perfect" ? [523,659,784,1046,1318] : kind === "rotate" ? [440] : kind === "invalid" ? [165] : [330,440];
+        try {
+          if (!audio) {
+            const Audio = window.AudioContext || window.webkitAudioContext;
+            if (!Audio) return;
+            audio = new Audio();
+          }
+          if (audio.state === "suspended") audio.resume().catch(()=>{});
+          notes.forEach((hz,index)=>{
+            const oscillator=audio.createOscillator(),gain=audio.createGain(),t=audio.currentTime+index*.055;
+            oscillator.type="sine";oscillator.frequency.value=hz;gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(.055,t+.008);gain.gain.exponentialRampToValueAtTime(.001,t+.18);
+            oscillator.connect(gain);gain.connect(audio.destination);oscillator.start(t);oscillator.stop(t+.2);
+          });
+        } catch { /* Sound is optional; a blocked audio device never stops play. */ }
+      }
+      function undo() {
+        if (busy || !game().previous) return;
+        cancelPointer(); clearTimeout(hintTimer);clearTimeout(toastTimer);$("board-toast").classList.remove("show");
+        game().state=clone(game().previous);game().previous=null;selected=state().hand.findIndex(Boolean);ended=false;save();render();
+        $("play-hint").textContent="한 수 되돌렸어요. 다른 자리도 살펴볼까요?";announce($("play-hint").textContent);
+        $("tray").querySelector("button:not(:disabled)")?.focus({preventScroll:true});
+      }
+      function restart() {
+        if (busy) return;
+        cancelPointer();clearTimeout(hintTimer);clearTimeout(toastTimer);$("board-toast").classList.remove("show");
+        data.games[data.mode]={day,state:G.create(data.mode==="daily"?G.hash(`night-pieces:${day}`):randomSeed()),previous:null};selected=0;ended=false;save();render();
+        $("play-hint").textContent="조각을 끌어 놓거나, 조각을 고른 뒤 빈칸을 톡.";announce("새 퍼즐을 시작했어요.");
+      }
+      $("rotate").addEventListener("click",rotate);$("hint").addEventListener("click",hint);$("undo").addEventListener("click",undo);$("end-undo").addEventListener("click",undo);
+      $("restart").addEventListener("click",()=>{if(!busy)$("restart-dialog").showModal();});
+      $("cancel-restart").addEventListener("click",()=>$("restart-dialog").close());$("confirm-restart").addEventListener("click",()=>{$("restart-dialog").close();restart();});
+      $("end-restart").addEventListener("click",restart);
+      $("help").addEventListener("click",()=>{cancelPointer();$("help-dialog").showModal();});$("close-help").addEventListener("click",()=>$("help-dialog").close());
+      $("sound").addEventListener("click",()=>{
+        data.sound=!data.sound;
+        if(data.sound){try{const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)throw Error("unavailable");audio=audio||new Audio();audio.resume().catch(()=>{});}catch{data.sound=false;announce("이 브라우저에서는 소리를 재생할 수 없어요.");}}
+        save();renderStats();tone("rotate");
+      });
+      document.querySelectorAll("[data-mode]").forEach(button=>button.addEventListener("click",()=>{
+        if(busy||button.dataset.mode===data.mode)return;
+        cancelPointer();clearTimeout(hintTimer);clearTimeout(toastTimer);$("board-toast").classList.remove("show");
+        data.mode=button.dataset.mode;ensureGame();selected=state().hand.findIndex(Boolean);ended=false;save();render();
+        $("play-hint").textContent=data.mode==="daily"?"오늘은 30수. 한 수 한 수 알차게 비워 보세요.":"타이머 없이, 내 속도로 즐겨요.";
+      }));
+      document.addEventListener("keydown",event=>{
+        if(event.ctrlKey||event.metaKey||event.altKey||$("help-dialog").open||$("restart-dialog").open||event.target.closest("input,textarea,select,[contenteditable=true]")||busy||ended)return;
+        if(["1","2","3"].includes(event.key)){event.preventDefault();select(Number(event.key)-1);cells[cursor].focus({preventScroll:true});showPreview(Math.floor(cursor/8),cursor%8);return;}
+        if(event.key.toLowerCase()==="r"){event.preventDefault();rotate();return;}
+        if(!$("board").contains(event.target))return;
+        const offsets={ArrowLeft:[0,-1],ArrowRight:[0,1],ArrowUp:[-1,0],ArrowDown:[1,0]};
+        if(offsets[event.key]){event.preventDefault();const [dy,dx]=offsets[event.key];cursor=Math.max(0,Math.min(7,Math.floor(cursor/8)+dy))*8+Math.max(0,Math.min(7,cursor%8+dx));cells.forEach((cell,i)=>cell.tabIndex=i===cursor?0:-1);cells[cursor].focus({preventScroll:true});showPreview(Math.floor(cursor/8),cursor%8);cells[cursor].classList.add("cursor");}
+        if(event.key==="Escape")clearPreview();
+      });
+      document.addEventListener("visibilitychange",()=>{if(document.hidden){cancelPointer();save();}});
+      ensureGame();selected=state().hand.findIndex(Boolean);save();render();
+    })();
+  </script>
+</body>
+</html>
