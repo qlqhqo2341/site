@@ -40,6 +40,7 @@
   let fullscreenWatchdog;
   let fullscreenRequestPending = false;
   let leaving = false;
+  const glyphTransitions = new Map();
 
   function savePreferences() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences)); }
@@ -119,20 +120,66 @@
     if (preferences.seconds) $("second-hand").setAttribute("transform", `rotate(${seconds * 6} 200 200)`);
   }
 
+  function cancelGlyphTransition(element) {
+    const transition = glyphTransitions.get(element);
+    if (!transition) return;
+    glyphTransitions.delete(element);
+    transition.animations.forEach((animation) => animation.cancel());
+    transition.outgoing?.remove();
+  }
+
+  function updateGlyph(element, href, x, animate) {
+    cancelGlyphTransition(element);
+    const previousHref = element.getAttribute("href");
+    const previousX = Number(element.getAttribute("x") ?? x);
+    const canAnimate = animate && typeof element.animate === "function";
+    const outgoing = canAnimate && previousHref !== href ? element.cloneNode(false) : null;
+    if (outgoing) {
+      outgoing.removeAttribute("id");
+      outgoing.setAttribute("aria-hidden", "true");
+      element.parentNode.insertBefore(outgoing, element);
+    }
+    element.setAttribute("href", href);
+    element.setAttribute("x", x.toFixed(3));
+    if (!canAnimate) return;
+
+    const timing = { duration: 480, easing: "cubic-bezier(.4, 0, .2, 1)" };
+    const transition = { animations: [], outgoing };
+    // Move both outlines together so proportional spacing never jumps mid-fade.
+    if (outgoing) {
+      transition.animations.push(outgoing.animate([
+        { opacity: 1, transform: "translateX(0px)" },
+        { opacity: 0, transform: `translateX(${x - previousX}px)` },
+      ], timing));
+    }
+    if (outgoing || previousX !== x) {
+      const incoming = element.animate([
+        { opacity: outgoing ? 0 : 1, transform: `translateX(${previousX - x}px)` },
+        { opacity: 1, transform: "translateX(0px)" },
+      ], timing);
+      transition.animations.push(incoming);
+      glyphTransitions.set(element, transition);
+      incoming.onfinish = () => {
+        outgoing?.remove();
+        if (glyphTransitions.get(element) === transition) glyphTransitions.delete(element);
+      };
+    }
+  }
+
   function renderClock() {
     const now = new Date();
     const hours = preferences.hour24 ? now.getHours() : (now.getHours() % 12 || 12);
     const time = `${String(hours).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
     const minuteKey = `${now.toDateString()}-${now.getHours()}-${now.getMinutes()}`;
     if (minuteKey !== lastMinute) {
+      const animate = lastMinute !== "" && preferences.view === "digital" && !reducedMotion.matches;
       const characters = [time[0], time[1], ":", time[2], time[3]];
       const ids = ["hour-tens", "hour-ones", "time-colon", "minute-tens", "minute-ones"];
       const tracking = -6;
       const widths = characters.map((digit) => digit === ":" ? 63.906 : digitWidths[Number(digit)]);
       let x = (640 - widths.reduce((sum, width) => sum + width, 0) - tracking * 4) / 2;
       ids.forEach((id, index) => {
-        $(id).setAttribute("href", characters[index] === ":" ? "#digit-colon" : `#digit-${characters[index]}`);
-        $(id).setAttribute("x", x.toFixed(3));
+        updateGlyph($(id), characters[index] === ":" ? "#digit-colon" : `#digit-${characters[index]}`, x, animate);
         x += widths[index] + tracking;
       });
       const label = `${preferences.hour24 ? "" : (now.getHours() < 12 ? "오전 " : "오후 ")}${hours}시 ${now.getMinutes()}분`;
@@ -177,6 +224,9 @@
   function restartClock() {
     clearTimeout(clockTimer);
     cancelAnimationFrame(animationFrame);
+    for (const element of glyphTransitions.keys()) cancelGlyphTransition(element);
+    lastMinute = "";
+    lastSecond = -1;
     if (document.visibilityState !== "visible" || leaving) return;
     renderClock();
     if (preferences.view === "analog" && preferences.seconds && !reducedMotion.matches) {
@@ -390,6 +440,7 @@
     clearTimeout(clockTimer);
     clearTimeout(idleTimer);
     cancelAnimationFrame(animationFrame);
+    for (const element of glyphTransitions.keys()) cancelGlyphTransition(element);
     reconcileWakeLock();
   });
   const onSystemThemeChange = () => { if (preferences.theme === "auto") applyTheme(); };

@@ -78,13 +78,11 @@ svg { display: block; }
 .analog-clock { width: min(49vh, 49dvh, 460px, 76vw); }
 #analog-face { width: 100%; height: auto; overflow: visible; }
 .dial-outline { fill: none; stroke: var(--line); stroke-width: .65; }
-.tick { stroke: var(--ink); stroke-width: 1; opacity: .23; }
-.tick.major { opacity: .65; stroke-width: 1.6; }
-.dial-labels { fill: var(--secondary); font-size: 17px; font-weight: 300; text-anchor: middle; }
-.hour-hand, .minute-hand { stroke: var(--ink); stroke-linecap: round; fill: none; }
-.hour-hand { stroke-width: 5.5; }
-.minute-hand { stroke-width: 3.2; }
-.second-hand { stroke: var(--accent); stroke-width: 1.2; fill: var(--accent); }
+.tick { stroke: var(--ink); stroke-width: 1; stroke-linecap: round; opacity: .2; }
+.tick.major { opacity: .65; stroke-width: 2.6; }
+.dial-labels { fill: var(--secondary); font-size: 17px; font-weight: 500; text-anchor: middle; }
+.hour-hand, .minute-hand, .dial-hub { fill: var(--ink); }
+.second-hand { stroke: var(--accent); stroke-width: 2; stroke-linecap: round; fill: var(--accent); }
 .dial-pin { fill: var(--bg); }
 body[data-view="analog"] .date-block { margin-bottom: 25px; }
 body[data-view="analog"] .details { margin-top: 24px; }
