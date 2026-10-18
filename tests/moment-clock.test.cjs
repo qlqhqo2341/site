@@ -34,7 +34,11 @@ function element() {
 }
 
 function setup(options = {}) {
-  const nodes = new Map([...html.matchAll(/id="([^"]+)"/g)].map(x => [x[1], element()]));
+  const nodes = new Map([...html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*>/g)].map(([tag, id]) => {
+    const node = element();
+    for (const [, name, value] of tag.matchAll(/([\w:-]+)="([^"]*)"/g)) node.setAttribute(name, value);
+    return [id, node];
+  }));
   const fontButtons = ['rounded', 'modern', 'slim', 'mono', 'classic', 'digital'].map(style => {
     const button = nodes.get('font-choice-' + style);
     button.dataset.fontChoice = style;
@@ -276,6 +280,8 @@ test('fullscreen denial and a nonresponding embed display an actionable message'
 
 test('a minute rollover crossfades only changed digits and cleans up outgoing outlines', async () => {
   const app = setup({ animations: true, now: '2026-10-17T10:24:59+09:00' });
+  const stationary = ['hour-tens', 'hour-ones', 'time-colon', 'minute-tens'];
+  const positions = stationary.map(id => app.node(id).getAttribute('x'));
   assert.equal(app.animations.length, 0, 'Initial time appears immediately');
   app.setNow('2026-10-17T10:25:00+09:00');
   await app.tick();
@@ -291,9 +297,10 @@ test('a minute rollover crossfades only changed digits and cleans up outgoing ou
   assert.equal(exit.frames[0].opacity, 1);
   assert.equal(exit.frames[1].opacity, 0);
   assert.equal(entry.timing.duration, exit.timing.duration);
-  for (const animation of app.animations.filter(animation => animation !== entry && animation !== exit)) {
-    assert.equal(animation.frames[0].opacity, 1, 'Unchanged digits stay visible while spacing moves');
-  }
+  assert.equal(app.animations.length, 2, 'Only the changing digit crossfades');
+  assert.deepEqual(stationary.map(id => app.node(id).getAttribute('x')), positions);
+  assert.ok(app.animations.every(animation => animation.frames.every(frame => !('transform' in frame))),
+    'Crossfades never move the digits horizontally');
   app.animations.forEach(animation => animation.finish());
   assert.equal(app.numerals.childNodes.length, 5);
 });
@@ -364,8 +371,58 @@ test('webfont text crossfades preserve the outgoing text and clean it up', async
   assert.equal(outgoing[0].textContent, '4');
   assert.equal(app.node('font-minute-ones').textContent, '5');
   assert.equal(app.animations.find(animation => animation.node === outgoing[0]).frames[1].opacity, 0);
+  assert.equal(app.animations.length, 2);
+  assert.ok(app.animations.every(animation => animation.frames.every(frame => !('transform' in frame))));
   app.animations.forEach(animation => animation.finish());
   assert.equal(app.fontNumerals.childNodes.length, 5);
+});
+
+test('every style keeps each digit in its own slot throughout a full day in both time formats', async () => {
+  const start = new Date('2026-10-17T00:00:00+09:00').valueOf();
+  for (const style of ['rounded', 'modern', 'slim', 'mono', 'classic', 'digital']) {
+    const app = setup({ now: start });
+    await app.node('font-choice-' + style).click();
+    const webfont = style !== 'rounded';
+    const ids = webfont
+      ? ['font-hour-tens', 'font-hour-ones', 'font-colon', 'font-minute-tens', 'font-minute-ones']
+      : ['hour-tens', 'hour-ones', 'time-colon', 'minute-tens', 'minute-ones'];
+    const positions = ids.map(() => new Map());
+    for (const hour24 of [true, false]) {
+      await app.toggle('format-toggle', hour24);
+      for (let minute = 0; minute < 24 * 60; minute++) {
+        app.setNow(start + minute * 60000);
+        await app.tick();
+        ids.forEach((id, index) => {
+          const node = app.node(id);
+          // Outline glyphs use individual offsets to center their different ink widths.
+          // Each outline must retain that offset regardless of the neighboring digits.
+          const key = webfont ? 'center' : node.getAttribute('href');
+          const position = node.getAttribute('x');
+          assert.ok(Number.isFinite(Number(position)));
+          if (positions[index].has(key)) {
+            assert.equal(position, positions[index].get(key), `${style}: ${id} moved at minute ${minute}`);
+          } else positions[index].set(key, position);
+        });
+      }
+    }
+  }
+});
+
+test('seconds keep two permanent positions when crossing single and double digit boundaries', async () => {
+  for (const style of ['rounded', 'modern', 'slim', 'mono', 'classic', 'digital']) {
+    const app = setup({ now: '2026-10-17T10:24:00+09:00' });
+    await app.node('font-choice-' + style).click();
+    const tens = app.node('seconds-tens');
+    const ones = app.node('seconds-ones');
+    const positions = [tens, ones].map(node => node.getAttribute('x'));
+    assert.ok(Number(positions[1]) > Number(positions[0]));
+    for (const second of [9, 10, 11, 19, 20, 58, 59, 60]) {
+      app.setNow(new Date('2026-10-17T10:24:00+09:00').valueOf() + second * 1000);
+      await app.tick();
+      assert.equal(tens.textContent + ones.textContent, String(second % 60).padStart(2, '0'));
+      assert.deepEqual([tens, ones].map(node => node.getAttribute('x')), positions);
+    }
+  }
 });
 
 test('the latest font selection wins when font requests finish in reverse order', async () => {

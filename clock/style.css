@@ -69,8 +69,8 @@ svg { display: block; }
 .clock-composition { width: 100%; display: flex; flex-direction: column; align-items: center; transform: translateY(-6px); }
 .digital-clock { width: min(100%, 1260px); }
 #digital-face { width: 100%; height: auto; overflow: visible; }
-.font-numerals { font-family: var(--clock-face, sans-serif); font-weight: var(--clock-weight, 500); font-kerning: none; font-variant-numeric: normal; text-anchor: start; }
-.dial-labels, #seconds-label { font-family: var(--clock-face, sans-serif); font-weight: var(--clock-weight, 500); }
+.font-numerals { font-family: var(--clock-face, sans-serif); font-weight: var(--clock-weight, 500); font-kerning: none; font-variant-numeric: tabular-nums; text-anchor: middle; }
+.dial-labels, #seconds-label text { font-family: var(--clock-face, sans-serif); font-weight: var(--clock-weight, 500); }
 .details { min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 24px; }
 .date-block { text-align: center; margin-bottom: 24px; }
 .date-block p { margin: 0; }

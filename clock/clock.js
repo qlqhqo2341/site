@@ -3,16 +3,16 @@
 
   const $ = (id) => document.getElementById(id);
   const STORAGE_KEY = "moment.clock.v1";
-  // Natural Open Runde advances keep pairs such as 11 and 08 optically spaced.
-  const digitWidths = [146.719, 105.781, 136.719, 143.359, 146.484, 139.141, 142.578, 129.141, 142.109, 142.578];
-  // Advances are normalized to the SVG canvas using the bundled font files.
+  // Each place has a permanent center, shared by every clock style.
+  const digitSlots = [74, 222, 320, 418, 566];
+  const roundedGlyphCenters = [73.359, 45.625, 68.869, 72.284, 73.555, 71.385, 71.094, 63.633, 71.055, 71.445];
   const fontStyles = {
-    rounded: { label: "라운드", family: "Moment Rounded", weight: 600, size: 220, widths: [...digitWidths, 63.906] },
-    modern: { label: "모던", family: "Moment Inter", weight: 500, size: 219.919, colonY: 140.43, widths: [141.96, 91.275, 135.517, 137.879, 144.322, 132.617, 138.523, 125.638, 138.416, 138.523, 66.685] },
-    slim: { label: "슬림", family: "Moment Inter", weight: 300, size: 219.919, colonY: 140.537, widths: [135.839, 86.55, 134.98, 133.262, 138.309, 127.463, 132.295, 123.06, 134.443, 132.295, 62.067] },
-    mono: { label: "모노", family: "Moment Mono", weight: 400, size: 217.333, baseline: 159.849, colonY: 140.072, widths: Array(11).fill(130.4) },
-    classic: { label: "클래식", family: "Moment Classic", weight: 500, size: 212.536, baseline: 163.59, colonY: 138.09, widths: [133.047, 80.338, 113.919, 118.595, 115.619, 115.407, 122.633, 98.617, 120.083, 122.633, 53.134] },
-    digital: { label: "디지털", family: "Moment Digital", weight: 500, size: 183.043, baseline: 149.987, colonY: 137.54, widths: [152.658, 71.57, 151.926, 151.194, 133.622, 151.926, 150.095, 120.809, 152.658, 151.56, 41.368] },
+    rounded: { label: "라운드", family: "Moment Rounded", weight: 600, size: 220 },
+    modern: { label: "모던", family: "Moment Inter", weight: 500, size: 219.919, colonY: 140.43 },
+    slim: { label: "슬림", family: "Moment Inter", weight: 300, size: 219.919, colonY: 140.537 },
+    mono: { label: "모노", family: "Moment Mono", weight: 400, size: 217.333, baseline: 159.849, colonY: 140.072 },
+    classic: { label: "클래식", family: "Moment Classic", weight: 500, size: 212.536, baseline: 163.59, colonY: 138.09 },
+    digital: { label: "디지털", family: "Moment Digital", weight: 500, size: 183.043, baseline: 149.987, colonY: 137.54 },
   };
   const defaults = {
     view: "digital", theme: "dark", seconds: true,
@@ -208,7 +208,6 @@
   function updateGlyph(element, value, x, animate, text = false) {
     cancelGlyphTransition(element);
     const previousValue = text ? element.textContent : element.getAttribute("href");
-    const previousX = Number(element.getAttribute("x") ?? x);
     const canAnimate = animate && typeof element.animate === "function";
     const outgoing = canAnimate && previousValue !== value ? element.cloneNode(true) : null;
     if (outgoing) {
@@ -219,29 +218,17 @@
     if (text) element.textContent = value;
     else element.setAttribute("href", value);
     element.setAttribute("x", x.toFixed(3));
-    if (!canAnimate) return;
+    if (!outgoing) return;
 
     const timing = { duration: 480, easing: "cubic-bezier(.4, 0, .2, 1)" };
-    const transition = { animations: [], outgoing };
-    // Move both outlines together so proportional spacing never jumps mid-fade.
-    if (outgoing) {
-      transition.animations.push(outgoing.animate([
-        { opacity: 1, transform: "translateX(0px)" },
-        { opacity: 0, transform: `translateX(${x - previousX}px)` },
-      ], timing));
-    }
-    if (outgoing || previousX !== x) {
-      const incoming = element.animate([
-        { opacity: outgoing ? 0 : 1, transform: `translateX(${previousX - x}px)` },
-        { opacity: 1, transform: "translateX(0px)" },
-      ], timing);
-      transition.animations.push(incoming);
-      glyphTransitions.set(element, transition);
-      incoming.onfinish = () => {
-        outgoing?.remove();
-        if (glyphTransitions.get(element) === transition) glyphTransitions.delete(element);
-      };
-    }
+    const exit = outgoing.animate([{ opacity: 1 }, { opacity: 0 }], timing);
+    const incoming = element.animate([{ opacity: 0 }, { opacity: 1 }], timing);
+    const transition = { animations: [exit, incoming], outgoing };
+    glyphTransitions.set(element, transition);
+    incoming.onfinish = () => {
+      outgoing.remove();
+      if (glyphTransitions.get(element) === transition) glyphTransitions.delete(element);
+    };
   }
 
   function renderClock() {
@@ -255,14 +242,12 @@
       const font = fontStyles[activeFont];
       const characters = [time[0], time[1], ":", time[2], time[3]];
       const ids = webfont ? ["font-hour-tens", "font-hour-ones", "font-colon", "font-minute-tens", "font-minute-ones"] : ["hour-tens", "hour-ones", "time-colon", "minute-tens", "minute-ones"];
-      const tracking = -6;
-      const widths = characters.map((digit) => font.widths[digit === ":" ? 10 : Number(digit)]);
-      let x = (640 - widths.reduce((sum, width) => sum + width, 0) - tracking * 4) / 2;
       ids.forEach((id, index) => {
         const character = characters[index];
+        // SVG paths are centered by their outline; webfont text uses middle anchoring.
+        const x = webfont ? digitSlots[index] : digitSlots[index] - (character === ":" ? 31.953 : roundedGlyphCenters[Number(character)]);
         if (webfont) $(id).setAttribute("y", String(character === ":" ? font.colonY : (font.baseline ?? 164)));
         updateGlyph($(id), webfont ? character : (character === ":" ? "#digit-colon" : `#digit-${character}`), x, animate, webfont);
-        x += widths[index] + tracking;
       });
       const label = `${preferences.hour24 ? "" : (now.getHours() < 12 ? "오전 " : "오후 ")}${hours}시 ${now.getMinutes()}분`;
       $("digital-face").setAttribute("aria-label", label);
@@ -283,7 +268,9 @@
       lastDate = dateKey;
     }
     if (lastSecond !== now.getSeconds()) {
-      $("seconds-label").textContent = String(now.getSeconds()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      $("seconds-tens").textContent = seconds[0];
+      $("seconds-ones").textContent = seconds[1];
       $("seconds-progress").style.strokeDashoffset = String(60 - now.getSeconds());
       $("accessible-time").dateTime = now.toISOString();
       $("accessible-time").textContent = `${dateFormatter.format(now)} ${preferences.hour24 ? "" : (now.getHours() < 12 ? "오전 " : "오후 ")}${hours}시 ${now.getMinutes()}분 ${now.getSeconds()}초`;

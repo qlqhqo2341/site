@@ -15,5 +15,7 @@ visitors do not connect to an external font service. All six files together are
 Open Runde was subset from the upstream OTF with fontTools. Other subsets were
 obtained from the Google Fonts CSS API with the same character list and the
 weights shown above, then compressed to WOFF2 with fontTools. Source attribution and SIL Open Font License notices are
-included with the app. Numeric advances in `clock.js` are calculated from these
-exact files. The default rounded face retains its original SVG outlines.
+included with the app. Font sizes and baselines in `clock.js` are calculated from
+these files. Every style shares permanent digit slots and a stationary colon;
+webfont digits are center anchored with tabular figures where available. The
+default rounded face retains its original SVG outlines, centered in those slots.

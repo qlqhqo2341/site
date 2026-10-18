@@ -8,7 +8,7 @@
   <meta name="description" content="온전히 시간에 집중하는 벡터 시계. 전체화면과 화면 꺼짐 방지를 지원합니다.">
   <title>Moment — 온전히, 지금</title>
   <link rel="icon" type="image/svg+xml" href="icon.svg">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
   <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -83,7 +83,7 @@
       <div class="details">
         <span class="period" id="period" hidden></span>
         <div class="seconds" id="seconds" aria-hidden="true">
-          <svg viewBox="0 0 96 44"><path class="seconds-track" d="M18 37H78"/><path class="seconds-progress" id="seconds-progress" d="M18 37H78" pathLength="60"/><text id="seconds-label" x="41" y="24">00</text><text class="seconds-unit" x="64" y="23">초</text></svg>
+          <svg viewBox="0 0 96 44"><path class="seconds-track" d="M18 37H78"/><path class="seconds-progress" id="seconds-progress" d="M18 37H78" pathLength="60"/><g id="seconds-label"><text id="seconds-tens" x="31" y="24">0</text><text id="seconds-ones" x="51" y="24">0</text></g><text class="seconds-unit" x="72" y="23">초</text></svg>
         </div>
       </div>
     </div>
@@ -129,6 +129,6 @@
   </section>
   <p class="toast" id="toast" role="status" hidden></p>
   <noscript><p class="noscript">시계를 사용하려면 JavaScript를 켜주세요.</p></noscript>
-  <script src="clock.js?v=4"></script>
+  <script src="clock.js?v=5"></script>
 </body>
 </html>
