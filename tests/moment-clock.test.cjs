@@ -13,7 +13,7 @@ function element() {
   const classes = new Set();
   const children = new Map();
   return {
-    dataset: {}, style: {}, hidden: false, checked: true, textContent: '',
+    dataset: {}, style: { setProperty(key, value) { this[key] = value; } }, hidden: false, checked: true, textContent: '',
     childNodes: [], parentNode: null,
     classList: { add: x => classes.add(x), remove: x => classes.delete(x), contains: x => classes.has(x) },
     setAttribute: (key, value) => attributes.set(key, String(value)),
@@ -24,7 +24,7 @@ function element() {
     append(child) { child.parentNode = this; this.childNodes.push(child); },
     insertBefore(child, reference) { child.parentNode = this; this.childNodes.splice(this.childNodes.indexOf(reference), 0, child); },
     remove() { if (this.parentNode) this.parentNode.childNodes.splice(this.parentNode.childNodes.indexOf(this), 1); this.parentNode = null; },
-    cloneNode() { const clone = element(); for (const [key, value] of attributes) clone.setAttribute(key, value); clone.animate = this.animate; return clone; },
+    cloneNode() { const clone = element(); for (const [key, value] of attributes) clone.setAttribute(key, value); clone.textContent = this.textContent; clone.animate = this.animate; return clone; },
     focus() {}, blur() {}, matches: () => false, closest: () => null,
     querySelector(selector) { if (!children.has(selector)) children.set(selector, element()); return children.get(selector); },
     addEventListener(name, callback) { if (!listeners.has(name)) listeners.set(name, []); listeners.get(name).push(callback); },
@@ -35,20 +35,32 @@ function element() {
 
 function setup(options = {}) {
   const nodes = new Map([...html.matchAll(/id="([^"]+)"/g)].map(x => [x[1], element()]));
+  const fontButtons = ['rounded', 'modern', 'slim', 'mono', 'classic', 'digital'].map(style => {
+    const button = nodes.get('font-choice-' + style);
+    button.dataset.fontChoice = style;
+    return button;
+  });
   const document = Object.assign(element(), {
     visibilityState: 'visible', body: element(), documentElement: element(), activeElement: null,
     getElementById: id => nodes.get(id), createDocumentFragment: element, createElementNS: element,
-    querySelectorAll: () => [],
+    querySelectorAll: selector => selector === '[data-font-choice]' ? fontButtons : [],
   });
+  const fontRequests = [];
+  if (!options.fontsUnavailable) document.fonts = { load(descriptor, text) {
+    if (options.manualFonts) return new Promise((resolve, reject) => { fontRequests.push({ descriptor, text, resolve, reject }); });
+    fontRequests.push({ descriptor, text });
+    return options.fontError ? Promise.reject(Error('Font unavailable')) : Promise.resolve([{}]);
+  } };
   const requests = [];
   const sentinels = [];
   const timers = new Map();
   const animations = [];
-  const numerals = element();
-  for (const id of ['hour-tens', 'hour-ones', 'time-colon', 'minute-tens', 'minute-ones']) {
+  const numerals = nodes.get('vector-numerals');
+  const fontNumerals = nodes.get('font-numerals');
+  for (const id of ['hour-tens', 'hour-ones', 'time-colon', 'minute-tens', 'minute-ones', 'font-hour-tens', 'font-hour-ones', 'font-colon', 'font-minute-tens', 'font-minute-ones']) {
     const node = nodes.get(id);
     node.setAttribute('id', id);
-    numerals.append(node);
+    (id.startsWith('font-') ? fontNumerals : numerals).append(node);
     if (options.animations) node.animate = function (frames, timing) {
       const animation = { node: this, frames, timing, cancelled: false,
         cancel() { this.cancelled = true; }, finish() { this.onfinish?.(); } };
@@ -69,9 +81,10 @@ function setup(options = {}) {
     isSecureContext: options.secure !== false,
     matchMedia: query => query.includes('reduced-motion') ? motionPreference : { matches: false, addEventListener() {} },
   });
+  const storageWrites = [];
   const storage = {
     getItem() { if (options.storageThrows) throw Error('Storage unavailable'); return options.saved || null; },
-    setItem() { if (options.storageThrows) throw Error('Storage unavailable'); },
+    setItem(key, value) { if (options.storageThrows) throw Error('Storage unavailable'); storageWrites.push(value); },
   };
   const context = vm.createContext({
     document, window, navigator: options.unsupported ? {} : { wakeLock: { request } },
@@ -82,7 +95,7 @@ function setup(options = {}) {
   });
   vm.runInContext(source, context);
   return {
-    nodes, document, window, requests, timers, animations, numerals, motionPreference,
+    nodes, document, window, requests, timers, animations, numerals, fontNumerals, motionPreference, fontRequests, storageWrites,
     node: id => nodes.get(id),
     setNow(date) { now = new Date(date).valueOf(); },
     async flush() { for (let i = 0; i < 16; i++) await Promise.resolve(); },
@@ -323,4 +336,87 @@ test('reduced motion skips fades and cancels existing animations when enabled', 
   await app.motionPreference.emit('change');
   assert.ok(app.animations.every(animation => animation.cancelled));
   assert.equal(app.numerals.childNodes.length, 5);
+});
+
+test('a selected webfont is loaded before display, saved and restored on a new visit', async () => {
+  const app = setup();
+  await app.node('font-choice-modern').click();
+  assert.equal(app.document.body.dataset.font, 'modern');
+  assert.equal(app.numerals.hasAttribute('hidden'), true);
+  assert.equal(app.fontNumerals.hasAttribute('hidden'), false);
+  assert.equal(app.node('font-hour-tens').textContent, '2');
+  assert.equal(app.node('font-choice-modern').getAttribute('aria-pressed'), 'true');
+  assert.match(app.fontRequests[0].descriptor, /500.*Moment Inter/);
+  const saved = app.storageWrites.at(-1);
+  assert.equal(JSON.parse(saved).font, 'modern');
+  const restored = setup({ saved });
+  await restored.flush();
+  assert.equal(restored.document.body.dataset.font, 'modern');
+});
+
+test('webfont text crossfades preserve the outgoing text and clean it up', async () => {
+  const app = setup({ animations: true, now: '2026-10-17T10:24:59+09:00' });
+  await app.node('font-choice-mono').click();
+  app.setNow('2026-10-17T10:25:00+09:00');
+  await app.tick();
+  const outgoing = app.fontNumerals.childNodes.filter(node => node.hasAttribute('aria-hidden'));
+  assert.equal(outgoing.length, 1);
+  assert.equal(outgoing[0].textContent, '4');
+  assert.equal(app.node('font-minute-ones').textContent, '5');
+  assert.equal(app.animations.find(animation => animation.node === outgoing[0]).frames[1].opacity, 0);
+  app.animations.forEach(animation => animation.finish());
+  assert.equal(app.fontNumerals.childNodes.length, 5);
+});
+
+test('the latest font selection wins when font requests finish in reverse order', async () => {
+  const app = setup({ manualFonts: true });
+  const first = app.node('font-choice-modern').click();
+  const second = app.node('font-choice-classic').click();
+  assert.equal(app.fontRequests.length, 2);
+  assert.equal(app.document.body.dataset.font, 'rounded', 'The current clock stays visible during loading');
+  app.fontRequests[1].resolve([{}]);
+  await second;
+  assert.equal(app.document.body.dataset.font, 'classic');
+  app.fontRequests[0].resolve([{}]);
+  await first;
+  assert.equal(app.document.body.dataset.font, 'classic');
+  assert.equal(JSON.parse(app.storageWrites.at(-1)).font, 'classic');
+});
+
+test('failed or unsupported font loads keep the working style and leave controls usable', async () => {
+  for (const options of [{ fontError: true }, { fontsUnavailable: true }]) {
+    const app = setup(options);
+    await app.node('font-choice-digital').click();
+    assert.equal(app.document.body.dataset.font, 'rounded');
+    assert.equal(app.numerals.hasAttribute('hidden'), false);
+    assert.equal(app.node('font-choice-rounded').getAttribute('aria-pressed'), 'true');
+    assert.equal(app.node('font-picker').getAttribute('aria-busy'), 'false');
+    assert.match(app.node('font-status').textContent, /못했습니다/);
+    assert.equal(app.storageWrites.length, 0);
+  }
+});
+
+test('a timed-out font can be retried without a late response replacing the active style', async () => {
+  const app = setup({ manualFonts: true });
+  const first = app.node('font-choice-slim').click();
+  await app.runTimer(8000);
+  await first;
+  assert.equal(app.document.body.dataset.font, 'rounded');
+  app.fontRequests[0].resolve([{}]);
+  await app.flush();
+  assert.equal(app.document.body.dataset.font, 'rounded');
+  const retry = app.node('font-choice-slim').click();
+  assert.equal(app.fontRequests.length, 2);
+  app.fontRequests[1].resolve([{}]);
+  await retry;
+  assert.equal(app.document.body.dataset.font, 'slim');
+});
+
+test('unrecognized saved font values never become CSS font families', async () => {
+  for (const font of ['__proto__', 'toString', 'unknown', ['modern'], {}]) {
+    const app = setup({ saved: JSON.stringify({ font }) });
+    await app.flush();
+    assert.equal(app.document.body.dataset.font, 'rounded');
+    assert.equal(app.fontRequests.length, 0);
+  }
 });

@@ -5,9 +5,18 @@
   const STORAGE_KEY = "moment.clock.v1";
   // Natural Open Runde advances keep pairs such as 11 and 08 optically spaced.
   const digitWidths = [146.719, 105.781, 136.719, 143.359, 146.484, 139.141, 142.578, 129.141, 142.109, 142.578];
+  // Advances are normalized to the SVG canvas using the bundled font files.
+  const fontStyles = {
+    rounded: { label: "라운드", family: "Moment Rounded", weight: 600, size: 220, widths: [...digitWidths, 63.906] },
+    modern: { label: "모던", family: "Moment Inter", weight: 500, size: 219.919, colonY: 140.43, widths: [141.96, 91.275, 135.517, 137.879, 144.322, 132.617, 138.523, 125.638, 138.416, 138.523, 66.685] },
+    slim: { label: "슬림", family: "Moment Inter", weight: 300, size: 219.919, colonY: 140.537, widths: [135.839, 86.55, 134.98, 133.262, 138.309, 127.463, 132.295, 123.06, 134.443, 132.295, 62.067] },
+    mono: { label: "모노", family: "Moment Mono", weight: 400, size: 217.333, baseline: 159.849, colonY: 140.072, widths: Array(11).fill(130.4) },
+    classic: { label: "클래식", family: "Moment Classic", weight: 500, size: 212.536, baseline: 163.59, colonY: 138.09, widths: [133.047, 80.338, 113.919, 118.595, 115.619, 115.407, 122.633, 98.617, 120.083, 122.633, 53.134] },
+    digital: { label: "디지털", family: "Moment Digital", weight: 500, size: 183.043, baseline: 149.987, colonY: 137.54, widths: [152.658, 71.57, 151.926, 151.194, 133.622, 151.926, 150.095, 120.809, 152.658, 151.56, 41.368] },
+  };
   const defaults = {
     view: "digital", theme: "dark", seconds: true,
-    date: true, hour24: true, keepAwake: true,
+    date: true, hour24: true, keepAwake: true, font: "rounded",
   };
   const preferences = { ...defaults };
   try {
@@ -18,6 +27,7 @@
       }
       if (["digital", "analog"].includes(saved.view)) preferences.view = saved.view;
       if (["light", "dark", "auto"].includes(saved.theme)) preferences.theme = saved.theme;
+      if (typeof saved.font === "string" && Object.prototype.hasOwnProperty.call(fontStyles, saved.font)) preferences.font = saved.font;
     }
   } catch { /* The clock also works with unavailable or invalid local storage. */ }
 
@@ -41,6 +51,9 @@
   let fullscreenRequestPending = false;
   let leaving = false;
   const glyphTransitions = new Map();
+  const fontLoads = new Map();
+  let activeFont = "rounded";
+  let fontRequestId = 0;
 
   function savePreferences() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences)); }
@@ -66,6 +79,69 @@
     });
   }
 
+  function applyFontAppearance() {
+    const font = fontStyles[activeFont];
+    document.body.dataset.font = activeFont;
+    document.body.style.setProperty("--clock-face", `"${font.family}"`);
+    document.body.style.setProperty("--clock-weight", String(font.weight));
+    $("vector-numerals").toggleAttribute("hidden", activeFont !== "rounded");
+    $("font-numerals").toggleAttribute("hidden", activeFont === "rounded");
+    $("font-numerals").setAttribute("font-size", String(font.size));
+    document.querySelectorAll("[data-font-choice]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.fontChoice === activeFont));
+    });
+  }
+
+  function loadFont(style) {
+    if (style === "rounded") return Promise.resolve();
+    if (fontLoads.has(style)) return fontLoads.get(style);
+    const font = fontStyles[style];
+    const pending = (async () => {
+      if (typeof document.fonts?.load !== "function") throw new Error("Font loading unavailable");
+      let timeout;
+      try {
+        const faces = await Promise.race([
+          document.fonts.load(`${font.weight} 48px "${font.family}"`, "0123456789:"),
+          new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error("Font load timeout")), 8000); }),
+        ]);
+        if (!faces.length) throw new Error("Font not found");
+      } finally { clearTimeout(timeout); }
+    })();
+    fontLoads.set(style, pending);
+    pending.catch(() => { fontLoads.delete(style); });
+    return pending;
+  }
+
+  async function selectFont(style, persist = true) {
+    if (!Object.prototype.hasOwnProperty.call(fontStyles, style)) return;
+    const requestId = ++fontRequestId;
+    $("font-picker").setAttribute("aria-busy", "true");
+    $("font-status").textContent = `${fontStyles[style].label} 글꼴을 불러오는 중…`;
+    document.querySelectorAll("[data-font-choice]").forEach((button) => {
+      button.setAttribute("aria-busy", String(button.dataset.fontChoice === style));
+    });
+    try {
+      await loadFont(style);
+      if (requestId !== fontRequestId) return;
+      activeFont = style;
+      preferences.font = style;
+      if (persist) savePreferences();
+      applyFontAppearance();
+      restartClock();
+      $("font-status").textContent = `${fontStyles[style].label} 스타일이 적용되었습니다.`;
+    } catch {
+      if (requestId !== fontRequestId) return;
+      $("font-status").textContent = "글꼴을 불러오지 못했습니다. 다시 선택해 주세요.";
+      showToast(`글꼴을 불러오지 못해 ${fontStyles[activeFont].label} 스타일을 유지합니다.`);
+    } finally {
+      if (requestId === fontRequestId) {
+        $("font-picker").setAttribute("aria-busy", "false");
+        document.querySelectorAll("[data-font-choice]").forEach((button) => button.removeAttribute("aria-busy"));
+      }
+    }
+    showControls();
+  }
+
   function applyPreferences() {
     document.body.dataset.view = preferences.view;
     $("digital-clock").hidden = preferences.view !== "digital";
@@ -80,6 +156,7 @@
       $(`${id}-toggle`).checked = preferences[key];
     }
     applyTheme();
+    applyFontAppearance();
     lastMinute = "";
     lastDate = "";
     lastSecond = -1;
@@ -128,18 +205,19 @@
     transition.outgoing?.remove();
   }
 
-  function updateGlyph(element, href, x, animate) {
+  function updateGlyph(element, value, x, animate, text = false) {
     cancelGlyphTransition(element);
-    const previousHref = element.getAttribute("href");
+    const previousValue = text ? element.textContent : element.getAttribute("href");
     const previousX = Number(element.getAttribute("x") ?? x);
     const canAnimate = animate && typeof element.animate === "function";
-    const outgoing = canAnimate && previousHref !== href ? element.cloneNode(false) : null;
+    const outgoing = canAnimate && previousValue !== value ? element.cloneNode(true) : null;
     if (outgoing) {
       outgoing.removeAttribute("id");
       outgoing.setAttribute("aria-hidden", "true");
       element.parentNode.insertBefore(outgoing, element);
     }
-    element.setAttribute("href", href);
+    if (text) element.textContent = value;
+    else element.setAttribute("href", value);
     element.setAttribute("x", x.toFixed(3));
     if (!canAnimate) return;
 
@@ -173,13 +251,17 @@
     const minuteKey = `${now.toDateString()}-${now.getHours()}-${now.getMinutes()}`;
     if (minuteKey !== lastMinute) {
       const animate = lastMinute !== "" && preferences.view === "digital" && !reducedMotion.matches;
+      const webfont = activeFont !== "rounded";
+      const font = fontStyles[activeFont];
       const characters = [time[0], time[1], ":", time[2], time[3]];
-      const ids = ["hour-tens", "hour-ones", "time-colon", "minute-tens", "minute-ones"];
+      const ids = webfont ? ["font-hour-tens", "font-hour-ones", "font-colon", "font-minute-tens", "font-minute-ones"] : ["hour-tens", "hour-ones", "time-colon", "minute-tens", "minute-ones"];
       const tracking = -6;
-      const widths = characters.map((digit) => digit === ":" ? 63.906 : digitWidths[Number(digit)]);
+      const widths = characters.map((digit) => font.widths[digit === ":" ? 10 : Number(digit)]);
       let x = (640 - widths.reduce((sum, width) => sum + width, 0) - tracking * 4) / 2;
       ids.forEach((id, index) => {
-        updateGlyph($(id), characters[index] === ":" ? "#digit-colon" : `#digit-${characters[index]}`, x, animate);
+        const character = characters[index];
+        if (webfont) $(id).setAttribute("y", String(character === ":" ? font.colonY : (font.baseline ?? 164)));
+        updateGlyph($(id), webfont ? character : (character === ":" ? "#digit-colon" : `#digit-${character}`), x, animate, webfont);
         x += widths[index] + tracking;
       });
       const label = `${preferences.hour24 ? "" : (now.getHours() < 12 ? "오전 " : "오후 ")}${hours}시 ${now.getMinutes()}분`;
@@ -401,6 +483,9 @@
   document.querySelectorAll("[data-theme-choice]").forEach((button) => {
     button.addEventListener("click", () => updatePreference("theme", button.dataset.themeChoice));
   });
+  document.querySelectorAll("[data-font-choice]").forEach((button) => {
+    button.addEventListener("click", () => selectFont(button.dataset.fontChoice));
+  });
   document.addEventListener("pointerdown", (event) => {
     showControls();
     if (settingsOpen && !event.target.closest("#settings-panel, #settings-button")) setSettings(false, false);
@@ -450,6 +535,7 @@
 
   buildDial();
   applyPreferences();
+  if (preferences.font !== "rounded") selectFont(preferences.font, false);
   updateFullscreenButton();
   requestWakeLock();
   showControls();

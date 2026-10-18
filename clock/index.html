@@ -8,7 +8,7 @@
   <meta name="description" content="온전히 시간에 집중하는 벡터 시계. 전체화면과 화면 꺼짐 방지를 지원합니다.">
   <title>Moment — 온전히, 지금</title>
   <link rel="icon" type="image/svg+xml" href="icon.svg">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
   <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -52,12 +52,19 @@
       <div class="date-block" id="date-block"><p id="date-label"></p></div>
       <div class="digital-clock" id="digital-clock">
         <svg id="digital-face" viewBox="0 0 640 174" role="img" aria-label="현재 시각" xmlns="http://www.w3.org/2000/svg">
-          <g class="numerals" fill="currentColor">
+          <g class="numerals" id="vector-numerals" fill="currentColor">
             <use id="hour-tens" href="#digit-0"/>
             <use id="hour-ones" href="#digit-0"/>
             <use class="colon" id="time-colon" href="#digit-colon"/>
             <use id="minute-tens" href="#digit-0"/>
             <use id="minute-ones" href="#digit-0"/>
+          </g>
+          <g class="font-numerals" id="font-numerals" fill="currentColor" hidden>
+            <text id="font-hour-tens" y="164">0</text>
+            <text id="font-hour-ones" y="164">0</text>
+            <text id="font-colon" y="140">:</text>
+            <text id="font-minute-tens" y="164">0</text>
+            <text id="font-minute-ones" y="164">0</text>
           </g>
         </svg>
       </div>
@@ -101,6 +108,18 @@
   <section class="settings-panel" id="settings-panel" role="dialog" aria-modal="false" aria-labelledby="settings-title" hidden>
     <div class="settings-heading"><h1 id="settings-title">나만의 순간</h1><button class="icon-button" id="close-settings" type="button" aria-label="설정 닫기"><svg aria-hidden="true"><use href="#i-close"/></svg></button></div>
     <p class="settings-description">편안한 시계로 맞춰보세요.</p>
+    <div class="font-setting">
+      <p class="setting-label" id="font-picker-label">숫자 스타일</p>
+      <div class="font-picker" id="font-picker" role="group" aria-labelledby="font-picker-label">
+        <button class="font-option" id="font-choice-rounded" type="button" data-font-choice="rounded" aria-pressed="true" aria-label="라운드 글꼴" title="Open Runde Semibold"><span class="font-sample" aria-hidden="true">12:34</span><span>라운드</span></button>
+        <button class="font-option" id="font-choice-modern" type="button" data-font-choice="modern" aria-pressed="false" aria-label="모던 글꼴" title="Inter Medium"><span class="font-sample" aria-hidden="true">12:34</span><span>모던</span></button>
+        <button class="font-option" id="font-choice-slim" type="button" data-font-choice="slim" aria-pressed="false" aria-label="슬림 글꼴" title="Inter Light"><span class="font-sample" aria-hidden="true">12:34</span><span>슬림</span></button>
+        <button class="font-option" id="font-choice-mono" type="button" data-font-choice="mono" aria-pressed="false" aria-label="모노 글꼴" title="IBM Plex Mono"><span class="font-sample" aria-hidden="true">12:34</span><span>모노</span></button>
+        <button class="font-option" id="font-choice-classic" type="button" data-font-choice="classic" aria-pressed="false" aria-label="클래식 글꼴" title="Lora Medium"><span class="font-sample" aria-hidden="true">12:34</span><span>클래식</span></button>
+        <button class="font-option" id="font-choice-digital" type="button" data-font-choice="digital" aria-pressed="false" aria-label="디지털 글꼴" title="Orbitron"><span class="font-sample" aria-hidden="true">12:34</span><span>디지털</span></button>
+      </div>
+      <p class="font-status" id="font-status" role="status">디지털 숫자와 아날로그 눈금에 적용됩니다.</p>
+    </div>
     <label class="setting-row" for="seconds-toggle"><span>초 표시</span><input class="toggle" id="seconds-toggle" type="checkbox" checked></label>
     <label class="setting-row" for="date-toggle"><span>날짜 표시</span><input class="toggle" id="date-toggle" type="checkbox" checked></label>
     <label class="setting-row" for="format-toggle"><span>24시간 형식</span><input class="toggle" id="format-toggle" type="checkbox" checked></label>
@@ -110,6 +129,6 @@
   </section>
   <p class="toast" id="toast" role="status" hidden></p>
   <noscript><p class="noscript">시계를 사용하려면 JavaScript를 켜주세요.</p></noscript>
-  <script src="clock.js?v=3"></script>
+  <script src="clock.js?v=4"></script>
 </body>
 </html>

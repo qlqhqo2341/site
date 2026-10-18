@@ -1,5 +1,12 @@
 @charset "UTF-8";
 
+@font-face { font-family: "Moment Rounded"; src: url("fonts/rounded-600.woff2") format("woff2"); font-style: normal; font-weight: 600; font-display: swap; }
+@font-face { font-family: "Moment Inter"; src: url("fonts/inter-300.woff2") format("woff2"); font-style: normal; font-weight: 300; font-display: swap; }
+@font-face { font-family: "Moment Inter"; src: url("fonts/inter-500.woff2") format("woff2"); font-style: normal; font-weight: 500; font-display: swap; }
+@font-face { font-family: "Moment Mono"; src: url("fonts/plex-mono-400.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "Moment Classic"; src: url("fonts/lora-500.woff2") format("woff2"); font-style: normal; font-weight: 500; font-display: swap; }
+@font-face { font-family: "Moment Digital"; src: url("fonts/orbitron-500.woff2") format("woff2"); font-style: normal; font-weight: 500; font-display: swap; }
+
 :root {
   color-scheme: dark;
   --bg: #0e1017;
@@ -62,6 +69,8 @@ svg { display: block; }
 .clock-composition { width: 100%; display: flex; flex-direction: column; align-items: center; transform: translateY(-6px); }
 .digital-clock { width: min(100%, 1260px); }
 #digital-face { width: 100%; height: auto; overflow: visible; }
+.font-numerals { font-family: var(--clock-face, sans-serif); font-weight: var(--clock-weight, 500); font-kerning: none; font-variant-numeric: normal; text-anchor: start; }
+.dial-labels, #seconds-label { font-family: var(--clock-face, sans-serif); font-weight: var(--clock-weight, 500); }
 .details { min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 24px; }
 .date-block { text-align: center; margin-bottom: 24px; }
 .date-block p { margin: 0; }
@@ -80,7 +89,7 @@ svg { display: block; }
 .dial-outline { fill: none; stroke: var(--line); stroke-width: .65; }
 .tick { stroke: var(--ink); stroke-width: 1; stroke-linecap: round; opacity: .2; }
 .tick.major { opacity: .65; stroke-width: 2.6; }
-.dial-labels { fill: var(--secondary); font-size: 17px; font-weight: 500; text-anchor: middle; }
+.dial-labels { fill: var(--secondary); font-size: 17px; font-weight: var(--clock-weight, 500); text-anchor: middle; }
 .hour-hand, .minute-hand, .dial-hub { fill: var(--ink); }
 .second-hand { stroke: var(--accent); stroke-width: 2; stroke-linecap: round; fill: var(--accent); }
 .dial-pin { fill: var(--bg); }
@@ -104,13 +113,31 @@ kbd { font-family: inherit; font-size: 9px; padding: 2px 4px; border: 1px solid 
 body.is-idle .chrome { opacity: 0; pointer-events: none; }
 body.is-idle { cursor: none; }
 body.is-idle .chrome:focus-within { opacity: 1; pointer-events: auto; }
-.settings-panel { position: fixed; z-index: 10; bottom: max(146px, calc(env(safe-area-inset-bottom) + 112px)); left: 50%; transform: translateX(-50%); width: 344px; padding: 18px 24px 22px; background: var(--panel); border: 1px solid var(--line); border-radius: 25px; box-shadow: 0 16px 80px rgb(0 0 0 / 16%); backdrop-filter: blur(35px); -webkit-backdrop-filter: blur(35px); animation: panel-in .2s ease-out; }
+.settings-panel { position: fixed; z-index: 10; bottom: max(146px, calc(env(safe-area-inset-bottom) + 112px)); left: 50%; transform: translateX(-50%); width: 360px; max-height: calc(100dvh - 176px); overflow-y: auto; overscroll-behavior: contain; padding: 18px 24px 22px; background: var(--panel); border: 1px solid var(--line); border-radius: 25px; box-shadow: 0 16px 80px rgb(0 0 0 / 16%); backdrop-filter: blur(35px); -webkit-backdrop-filter: blur(35px); animation: panel-in .2s ease-out; }
+.settings-panel { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.settings-panel::-webkit-scrollbar { width: 4px; background: transparent; }
+.settings-panel::-webkit-scrollbar-thumb { background: var(--line); border-radius: 20px; }
 @keyframes panel-in { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
 .settings-heading { display: flex; align-items: center; justify-content: space-between; }
 .settings-heading h1 { margin: 0; font-size: 17px; font-weight: 550; letter-spacing: -.6px; }
 .settings-heading .icon-button { margin-right: -10px; width: 34px; height: 34px; }
 .settings-heading svg { width: 16px; height: 16px; }
 .settings-description { margin: 1px 0 19px; color: var(--secondary); font-size: 11px; }
+.font-setting { margin-bottom: 16px; }
+.setting-label { margin: 0 0 10px; font-size: 12px; }
+.font-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.font-option { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; min-width: 0; min-height: 65px; padding: 10px 4px; border: 1px solid var(--line); border-radius: 13px; background: var(--hover); color: var(--secondary); font-size: 10px; transition: border-color .2s, background .2s; }
+.font-option:hover { background: var(--selected); color: var(--ink); }
+.font-option[aria-pressed="true"] { border-color: var(--accent); background: var(--selected); color: var(--ink); }
+.font-option[aria-busy="true"] { border-color: var(--accent); opacity: .6; }
+.font-sample { font-family: var(--preview-face, sans-serif); font-weight: var(--preview-weight, 500); font-size: 21px; line-height: 1; letter-spacing: -.5px; }
+.font-option[data-font-choice="rounded"] { --preview-face: "Moment Rounded"; --preview-weight: 600; }
+.font-option[data-font-choice="modern"] { --preview-face: "Moment Inter"; --preview-weight: 500; }
+.font-option[data-font-choice="slim"] { --preview-face: "Moment Inter"; --preview-weight: 300; }
+.font-option[data-font-choice="mono"] { --preview-face: "Moment Mono"; --preview-weight: 400; }
+.font-option[data-font-choice="classic"] { --preview-face: "Moment Classic"; --preview-weight: 500; }
+.font-option[data-font-choice="digital"] { --preview-face: "Moment Digital"; --preview-weight: 500; }
+.font-status { margin: 9px 0 0; min-height: 14px; color: var(--muted); font-size: 9px; line-height: 1.5; }
 .setting-row { min-height: 53px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 20px; font-size: 12px; cursor: pointer; }
 .setting-note { display: block; color: var(--secondary); font-size: 10px; line-height: 1.6; max-width: 218px; margin-top: 5px; }
 .setting-row:has(.setting-note) { padding: 13px 0; }
