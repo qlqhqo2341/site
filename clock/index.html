@@ -8,7 +8,7 @@
   <meta name="description" content="온전히 시간에 집중하는 벡터 시계. 전체화면과 화면 꺼짐 방지를 지원합니다.">
   <title>Moment — 온전히, 지금</title>
   <link rel="icon" type="image/svg+xml" href="icon.svg">
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -124,11 +124,11 @@
     <label class="setting-row" for="date-toggle"><span>날짜 표시</span><input class="toggle" id="date-toggle" type="checkbox" checked></label>
     <label class="setting-row" for="format-toggle"><span>24시간 형식</span><input class="toggle" id="format-toggle" type="checkbox" checked></label>
     <label class="setting-row" for="wake-toggle"><span>화면 꺼짐 방지<span class="setting-note" id="wake-detail">이 탭을 보고 있는 동안 화면을 유지합니다.</span></span><input class="toggle" id="wake-toggle" type="checkbox" checked></label>
-    <div class="setting-row theme-setting"><span id="theme-label">화면 테마</span><div class="theme-picker" role="group" aria-labelledby="theme-label"><button type="button" data-theme-choice="light" aria-pressed="false">밝게</button><button type="button" data-theme-choice="dark" aria-pressed="true">어둡게</button><button type="button" data-theme-choice="auto" aria-pressed="false">자동</button></div></div>
+    <div class="setting-row theme-setting"><span id="theme-label">화면 테마</span><div class="theme-picker" role="group" aria-labelledby="theme-label"><button id="theme-choice-light" type="button" data-theme-choice="light" aria-pressed="false">밝게</button><button id="theme-choice-dark" type="button" data-theme-choice="dark" aria-pressed="true">어둡게</button><button id="theme-choice-black" type="button" data-theme-choice="black" aria-pressed="false" title="배경빛 없이 순수한 검정">리얼 블랙</button><button id="theme-choice-auto" type="button" data-theme-choice="auto" aria-pressed="false">자동</button></div></div>
     <p class="settings-footnote">설정은 이 브라우저에 저장됩니다.</p>
   </section>
   <p class="toast" id="toast" role="status" hidden></p>
   <noscript><p class="noscript">시계를 사용하려면 JavaScript를 켜주세요.</p></noscript>
-  <script src="clock.js?v=6"></script>
+  <script src="clock.js?v=7"></script>
 </body>
 </html>

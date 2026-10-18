@@ -26,7 +26,7 @@
         if (typeof saved[key] === "boolean") preferences[key] = saved[key];
       }
       if (["digital", "analog"].includes(saved.view)) preferences.view = saved.view;
-      if (["light", "dark", "auto"].includes(saved.theme)) preferences.theme = saved.theme;
+      if (["light", "dark", "black", "auto"].includes(saved.theme)) preferences.theme = saved.theme;
       if (typeof saved.font === "string" && Object.prototype.hasOwnProperty.call(fontStyles, saved.font)) preferences.font = saved.font;
     }
   } catch { /* The clock also works with unavailable or invalid local storage. */ }
@@ -70,10 +70,11 @@
 
   function applyTheme() {
     const theme = preferences.theme === "auto" ? (systemTheme.matches ? "dark" : "light") : preferences.theme;
+    const dark = theme !== "light";
     document.documentElement.dataset.theme = theme;
-    document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#0e1017" : "#f5f3f8";
-    $("theme-button").querySelector("use").setAttribute("href", theme === "dark" ? "#i-sun" : "#i-moon");
-    $("theme-button").setAttribute("aria-label", `${theme === "dark" ? "밝은" : "어두운"} 테마로 전환`);
+    document.querySelector('meta[name="theme-color"]').content = theme === "black" ? "#000000" : (dark ? "#0e1017" : "#f5f3f8");
+    $("theme-button").querySelector("use").setAttribute("href", dark ? "#i-sun" : "#i-moon");
+    $("theme-button").setAttribute("aria-label", `${dark ? "밝은" : "어두운"} 테마로 전환`);
     document.querySelectorAll("[data-theme-choice]").forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.themeChoice === preferences.theme));
     });
@@ -454,7 +455,7 @@
   $("digital-button").addEventListener("click", () => updatePreference("view", "digital"));
   $("analog-button").addEventListener("click", () => updatePreference("view", "analog"));
   $("theme-button").addEventListener("click", () => {
-    updatePreference("theme", document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+    updatePreference("theme", document.documentElement.dataset.theme === "light" ? "dark" : "light");
   });
   $("settings-button").addEventListener("click", () => setSettings(!settingsOpen));
   $("close-settings").addEventListener("click", () => setSettings(false));

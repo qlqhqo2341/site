@@ -44,10 +44,15 @@ function setup(options = {}) {
     button.dataset.fontChoice = style;
     return button;
   });
+  const themeButtons = ['light', 'dark', 'black', 'auto'].map(theme => {
+    const button = nodes.get('theme-choice-' + theme);
+    button.dataset.themeChoice = theme;
+    return button;
+  });
   const document = Object.assign(element(), {
     visibilityState: 'visible', body: element(), documentElement: element(), activeElement: null,
     getElementById: id => nodes.get(id), createDocumentFragment: element, createElementNS: element,
-    querySelectorAll: selector => selector === '[data-font-choice]' ? fontButtons : [],
+    querySelectorAll: selector => selector === '[data-font-choice]' ? fontButtons : (selector === '[data-theme-choice]' ? themeButtons : []),
   });
   const fontRequests = [];
   if (!options.fontsUnavailable) document.fonts = { load(descriptor, text) {
@@ -73,6 +78,7 @@ function setup(options = {}) {
     };
   }
   const motionPreference = Object.assign(element(), { matches: Boolean(options.reducedMotion) });
+  const systemTheme = Object.assign(element(), { matches: Boolean(options.systemDark) });
   let timerID = 0;
   let now = new Date(options.now || '2026-10-16T23:59:59+09:00').valueOf();
   const request = () => {
@@ -83,7 +89,7 @@ function setup(options = {}) {
   };
   const window = Object.assign(element(), {
     isSecureContext: options.secure !== false,
-    matchMedia: query => query.includes('reduced-motion') ? motionPreference : { matches: false, addEventListener() {} },
+    matchMedia: query => query.includes('reduced-motion') ? motionPreference : systemTheme,
   });
   const storageWrites = [];
   const storage = {
@@ -99,7 +105,7 @@ function setup(options = {}) {
   });
   vm.runInContext(source, context);
   return {
-    nodes, document, window, requests, timers, animations, numerals, fontNumerals, motionPreference, fontRequests, storageWrites,
+    nodes, document, window, requests, timers, animations, numerals, fontNumerals, motionPreference, systemTheme, fontRequests, storageWrites,
     node: id => nodes.get(id),
     setNow(date) { now = new Date(date).valueOf(); },
     async flush() { for (let i = 0; i < 16; i++) await Promise.resolve(); },
@@ -245,6 +251,42 @@ test('seconds toggle removes the SVG second hand and saved settings survive inva
   const wrongTypes = setup({ saved: JSON.stringify({ view: '<script>', hour24: 'no' }) });
   assert.equal(wrongTypes.document.body.dataset.view, 'digital');
   assert.equal(wrongTypes.node('format-toggle').checked, true);
+});
+
+test('real black can be selected, saved and restored with the correct browser color and controls', async () => {
+  const app = setup();
+  assert.equal(app.document.documentElement.dataset.theme, 'dark');
+  assert.equal(app.document.querySelector('meta[name="theme-color"]').content, '#0e1017');
+  await app.node('theme-choice-black').click();
+  assert.equal(app.document.documentElement.dataset.theme, 'black');
+  assert.equal(app.document.querySelector('meta[name="theme-color"]').content, '#000000');
+  assert.equal(app.node('theme-button').getAttribute('aria-label'), '밝은 테마로 전환');
+  assert.equal(app.node('theme-button').querySelector('use').getAttribute('href'), '#i-sun');
+  for (const theme of ['light', 'dark', 'black', 'auto']) {
+    assert.equal(app.node('theme-choice-' + theme).getAttribute('aria-pressed'), String(theme === 'black'));
+  }
+  const saved = app.storageWrites.at(-1);
+  assert.equal(JSON.parse(saved).theme, 'black');
+  const restored = setup({ saved });
+  assert.equal(restored.document.documentElement.dataset.theme, 'black');
+  await restored.node('theme-button').click();
+  assert.equal(restored.document.documentElement.dataset.theme, 'light');
+  assert.equal(restored.node('theme-choice-light').getAttribute('aria-pressed'), 'true');
+  assert.equal(restored.node('theme-button').getAttribute('aria-label'), '어두운 테마로 전환');
+});
+
+test('automatic themes follow the system while an explicit real-black choice stays black', async () => {
+  const app = setup({ systemDark: true });
+  await app.node('theme-choice-auto').click();
+  assert.equal(app.document.documentElement.dataset.theme, 'dark');
+  app.systemTheme.matches = false;
+  await app.systemTheme.emit('change');
+  assert.equal(app.document.documentElement.dataset.theme, 'light');
+  await app.node('theme-choice-black').click();
+  app.systemTheme.matches = true;
+  await app.systemTheme.emit('change');
+  assert.equal(app.document.documentElement.dataset.theme, 'black');
+  assert.equal(app.node('theme-choice-black').getAttribute('aria-pressed'), 'true');
 });
 
 test('fullscreen enters and exits through the standard API and updates the control', async () => {
