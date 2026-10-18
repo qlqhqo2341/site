@@ -16,6 +16,7 @@ Open Runde was subset from the upstream OTF with fontTools. Other subsets were
 obtained from the Google Fonts CSS API with the same character list and the
 weights shown above, then compressed to WOFF2 with fontTools. Source attribution and SIL Open Font License notices are
 included with the app. Font sizes and baselines in `clock.js` are calculated from
-these files. Every style shares permanent digit slots and a stationary colon;
-webfont digits are center anchored with tabular figures where available. The
-default rounded face retains its original SVG outlines, centered in those slots.
+these files. Each style has its own permanent digit slots and colon spacing,
+tuned to its ink widths and stroke weight. Webfont digits are center anchored
+with tabular figures where available. The default rounded face retains its
+original SVG outlines, centered in those slots.

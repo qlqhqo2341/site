@@ -377,8 +377,9 @@ test('webfont text crossfades preserve the outgoing text and clean it up', async
   assert.equal(app.fontNumerals.childNodes.length, 5);
 });
 
-test('every style keeps each digit in its own slot throughout a full day in both time formats', async () => {
+test('styles have individual spacing that stays fixed throughout a full day in both time formats', async () => {
   const start = new Date('2026-10-17T00:00:00+09:00').valueOf();
+  const digitSpacings = new Set();
   for (const style of ['rounded', 'modern', 'slim', 'mono', 'classic', 'digital']) {
     const app = setup({ now: start });
     await app.node('font-choice-' + style).click();
@@ -386,6 +387,9 @@ test('every style keeps each digit in its own slot throughout a full day in both
     const ids = webfont
       ? ['font-hour-tens', 'font-hour-ones', 'font-colon', 'font-minute-tens', 'font-minute-ones']
       : ['hour-tens', 'hour-ones', 'time-colon', 'minute-tens', 'minute-ones'];
+    // At 00:00 both hour glyphs are identical, so their offset gives the pitch
+    // for either SVG outlines or text without depending on glyph bearings.
+    digitSpacings.add((Number(app.node(ids[1]).getAttribute('x')) - Number(app.node(ids[0]).getAttribute('x'))).toFixed(3));
     const positions = ids.map(() => new Map());
     for (const hour24 of [true, false]) {
       await app.toggle('format-toggle', hour24);
@@ -406,6 +410,7 @@ test('every style keeps each digit in its own slot throughout a full day in both
       }
     }
   }
+  assert.ok(digitSpacings.size > 1, 'Faces use individual spacing instead of a shared widest-font grid');
 });
 
 test('seconds keep two permanent positions when crossing single and double digit boundaries', async () => {

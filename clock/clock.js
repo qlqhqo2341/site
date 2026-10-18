@@ -3,16 +3,16 @@
 
   const $ = (id) => document.getElementById(id);
   const STORAGE_KEY = "moment.clock.v1";
-  // Each place has a permanent center, shared by every clock style.
-  const digitSlots = [74, 222, 320, 418, 566];
   const roundedGlyphCenters = [73.359, 45.625, 68.869, 72.284, 73.555, 71.385, 71.094, 63.633, 71.055, 71.445];
+  // Center-to-center steps are tuned to each face's ink width and weight.
+  // They stay constant within a style, so changing the time never reflows it.
   const fontStyles = {
-    rounded: { label: "라운드", family: "Moment Rounded", weight: 600, size: 220 },
-    modern: { label: "모던", family: "Moment Inter", weight: 500, size: 219.919, colonY: 140.43 },
-    slim: { label: "슬림", family: "Moment Inter", weight: 300, size: 219.919, colonY: 140.537 },
-    mono: { label: "모노", family: "Moment Mono", weight: 400, size: 217.333, baseline: 159.849, colonY: 140.072 },
-    classic: { label: "클래식", family: "Moment Classic", weight: 500, size: 212.536, baseline: 163.59, colonY: 138.09 },
-    digital: { label: "디지털", family: "Moment Digital", weight: 500, size: 183.043, baseline: 149.987, colonY: 137.54 },
+    rounded: { label: "라운드", family: "Moment Rounded", weight: 600, size: 220, digitStep: 130, colonStep: 80 },
+    modern: { label: "모던", family: "Moment Inter", weight: 500, size: 219.919, colonY: 140.43, digitStep: 136, colonStep: 90 },
+    slim: { label: "슬림", family: "Moment Inter", weight: 300, size: 219.919, colonY: 140.537, digitStep: 132, colonStep: 86 },
+    mono: { label: "모노", family: "Moment Mono", weight: 400, size: 217.333, baseline: 159.849, colonY: 140.072, digitStep: 130.4, colonStep: 88 },
+    classic: { label: "클래식", family: "Moment Classic", weight: 500, size: 212.536, baseline: 163.59, colonY: 138.09, digitStep: 128, colonStep: 88 },
+    digital: { label: "디지털", family: "Moment Digital", weight: 500, size: 183.043, baseline: 149.987, colonY: 137.54, digitStep: 148, colonStep: 94 },
   };
   const defaults = {
     view: "digital", theme: "dark", seconds: true,
@@ -240,6 +240,7 @@
       const animate = lastMinute !== "" && preferences.view === "digital" && !reducedMotion.matches;
       const webfont = activeFont !== "rounded";
       const font = fontStyles[activeFont];
+      const digitSlots = [320 - font.colonStep - font.digitStep, 320 - font.colonStep, 320, 320 + font.colonStep, 320 + font.colonStep + font.digitStep];
       const characters = [time[0], time[1], ":", time[2], time[3]];
       const ids = webfont ? ["font-hour-tens", "font-hour-ones", "font-colon", "font-minute-tens", "font-minute-ones"] : ["hour-tens", "hour-ones", "time-colon", "minute-tens", "minute-ones"];
       ids.forEach((id, index) => {
