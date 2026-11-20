@@ -10,7 +10,16 @@ for(const scope of ['https://example.test/','https://example.test/site/'])test(`
     let replaced;const location={search:'?from=bookmark',hash:'#continue',replace(value){replaced=value;}};
     vm.runInNewContext(html.match(/<script>([\s\S]*?)<\/script>/)[1],{URL,document:{baseURI:new URL(file,scope).href},location});
     assert.equal(replaced,new URL('games/'+target+'?from=bookmark#continue',scope).href);
-    assert.ok(fs.existsSync(path.join(gameRoot,target,'index.html')));
+    assert.ok(fs.existsSync(path.join(gameRoot,target.endsWith('.html')?target:target+'index.html')));
+  }
+});
+
+test('the host alias /games/ redirects to the explicit library index without duplicating its path',()=>{
+  const html=fs.readFileSync(path.join(root,'games.html'),'utf8');
+  for(const prefix of ['/','/site/'])for(const entry of ['games','games/','games.html']){
+    let replaced;const location={search:'?via=alias',hash:'#resume',replace(value){replaced=value;}};
+    vm.runInNewContext(html.match(/<script>([\s\S]*?)<\/script>/)[1],{URL,document:{baseURI:'https://example.test'+prefix+entry},location});
+    assert.equal(replaced,'https://example.test'+prefix+'games/index.html?via=alias#resume');
   }
 });
 

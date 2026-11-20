@@ -1,7 +1,7 @@
 (function(root){
   'use strict';
   const routes=Object.freeze({
-    'games.html':'',
+    'games.html':'index.html',
     'night-pieces.html':'night-pieces/',
     'train-2048.html':'train-2048/',
     'lights-out.html':'lights-out/',
