@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0c2934">
+  <meta name="description" content="포커 족보와 바다 유물로 점수를 키우는 심해 카드실. 9라운드의 카드 항해, 상점, 족보 강화, 오늘의 도전. 자동 저장과 오프라인 플레이.">
+  <title>심해 카드실 · Tidal Deck</title>
+  <link rel="stylesheet" href="tidal.css">
+  <link rel="stylesheet" href="../shared/offline.css">
+  <script src="tidal-engine.js" defer></script>
+  <script src="tidal-art.js" defer></script>
+  <script src="tidal.js" defer></script>
+  <script src="../shared/offline-client.js" defer></script>
+</head>
+<body>
+  <div class="ocean-glow" aria-hidden="true"></div>
+  <div class="app-shell">
+    <header class="topbar"><a class="wordmark" href="../index.html" aria-label="게임 보관함"><span class="brand-wave" aria-hidden="true">≋</span><span>TIDAL <b>DECK</b></span></a><div class="top-actions"><button id="sound" class="quiet-button" type="button" aria-pressed="false">소리 꺼짐</button><button id="help" class="quiet-button" type="button">게임 방법</button><a class="back-link" href="../index.html">보관함</a></div></header>
+    <main class="game-layout">
+      <aside class="logbook" aria-label="항해 현황">
+        <div class="logbook-head"><span class="eyebrow">THE UNDERSEA CARD CLUB</span><h1>심해 카드실</h1><p>좋은 패 하나, 뜻밖의 시너지.<br>이번에는 어디까지 내려갈까요.</p></div>
+        <div class="voyage-heading"><span id="depth-name">산호 정원</span><span id="depth-label">수심 100 m</span></div>
+        <div id="route" class="route" aria-label="라운드 진행"></div>
+        <div class="objective"><div class="stat-caption"><span>이번 라운드 목표</span><span id="round-label">1 / 9</span></div><strong id="target">180</strong><div class="score-line"><span>모은 점수</span><b id="round-score">0</b></div><div id="progress" class="progress" role="progressbar" aria-label="목표 점수 달성률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div></div>
+        <div class="resources"><div><span>남은 핸드</span><strong id="hands">4</strong><small>카드 내기</small></div><div><span>남은 버리기</span><strong id="discards">3</strong><small>최대 5장 교체</small></div><div class="pearl-stat"><span>진주</span><strong><i aria-hidden="true"></i><span id="coins">4</span></strong><small>상점에서 사용</small></div></div>
+        <div id="condition" class="condition"></div>
+        <button id="new-voyage" class="new-voyage" type="button">새 항해 / 오늘의 도전</button>
+        <div class="record-line"><span>최고의 한 수</span><b id="record">—</b></div>
+      </aside>
+      <section class="game-main" aria-label="카드 테이블">
+        <div class="relic-heading"><span>함께 잠수하는 유물 <b id="relic-count">1 / 4</b></span><span id="mode-label">자유 항해</span></div>
+        <div id="relics" class="relic-rack" aria-label="보유 유물"></div>
+        <section id="play-zone">
+          <div class="felt-table"><div class="table-orbit" aria-hidden="true"></div><div id="table-emblem" class="table-emblem" aria-hidden="true"></div><div class="table-caption"><span id="table-label">산호 정원의 첫 수</span><button id="deck" class="deck-counter" type="button" aria-label="남은 덱 확인"><span class="deck-back" aria-hidden="true">✧</span><span>덱 <b id="deck-count">44</b></span></button></div><div class="table-center"><div id="played-cards" class="played-cards" aria-label="직전에 낸 카드"></div><p id="table-message">서두르지 말고, 좋은 패를 골라요.</p><div id="last-score" class="last-score"></div></div><span class="table-footer">A LITTLE LUCK. A DEEPER DIVE.</span></div>
+          <div class="prediction"><div class="hand-type"><span id="selection-label">1–5장을 골라 주세요</span><strong id="hand-name">어떤 패가 보이나요?</strong></div><div class="equation" aria-label="예상 점수"><span class="chip-number"><small>칩</small><b id="chip-value">0</b></span><span class="math-symbol">×</span><span class="mult-number"><small>배수</small><b id="mult-value">0</b></span><span class="math-symbol">=</span><span class="total-number"><small>예상 점수</small><b id="preview-score">0</b></span></div></div>
+          <div class="hand-toolbar"><span>나의 패 <b id="hand-count">8</b><small>점이 있는 카드는 점수에 쓰여요</small></span><div class="sort-controls" role="group" aria-label="패 정렬"><button id="sort-rank" type="button" aria-pressed="true">숫자</button><button id="sort-suit" type="button" aria-pressed="false">무늬</button></div></div>
+          <div id="hand" class="card-hand" role="group" aria-label="손패에서 카드를 최대 다섯 장 선택"></div>
+          <div class="play-controls"><button id="discard" class="discard-button" type="button" disabled>선택 카드 버리기</button><button id="clear-selection" class="quiet-button clear-selection" type="button" disabled>선택 해제</button><button id="play" class="play-button" type="button" disabled>카드 내기 <span id="play-count">0 / 5</span></button></div>
+          <details class="score-details"><summary>점수 계산 자세히</summary><div id="breakdown">카드를 고르면 족보와 유물 효과를 미리 볼 수 있어요.</div></details>
+        </section>
+        <section id="shop-zone" class="shop-zone" aria-labelledby="shop-title" hidden><div class="shop-heading"><span class="eyebrow">A SMALL STOP BETWEEN DIVES</span><h2 id="shop-title">한숨 돌리는 정박지.</h2><p>유물을 조합하거나, 자주 쓰는 족보를 키워 보세요.</p></div><div id="reward" class="reward"></div><div id="shop-offers" class="shop-offers"></div><div class="shop-controls"><button id="reroll" class="discard-button" type="button">새 상품 보기 · 2 진주</button><button id="continue" class="play-button" type="button">다음 수심으로</button></div><p class="shop-tip">유물은 위에서 눌러 팔 수 있어요. 상점 구매는 취소되지 않아요.</p></section>
+        <section id="result-zone" class="result-zone" aria-labelledby="result-title" hidden><div id="result-icon"></div><span id="result-kicker" class="eyebrow"></span><h2 id="result-title"></h2><p id="result-copy"></p><div class="result-stats"><div><span>도달 라운드</span><strong id="result-round"></strong></div><div><span>최고의 한 수</span><strong id="result-best"></strong></div><div><span>항해 총점</span><strong id="result-total"></strong></div></div><button id="retry" class="play-button" type="button">다시 항해하기</button><button id="result-help" class="quiet-button" type="button">족보와 점수 알아보기</button></section>
+        <div id="notice" class="notice" role="status" aria-live="polite"></div>
+        <footer><span>좋은 패가 없어도, 다음 한 수는 달라요.</span><span id="save-status">항해 자동 저장</span></footer>
+      </section>
+    </main>
+  </div>
+  <dialog id="help-dialog" aria-labelledby="help-title"><div class="dialog-heading"><span class="eyebrow">YOUR FIRST DIVE</span><h2 id="help-title">한 수씩, 더 깊이.</h2><button class="dialog-close" data-close type="button" aria-label="게임 방법 닫기">×</button></div><p>손패 8장 중 <b>1–5장</b>을 골라 내세요. <b>칩 × 배수</b>가 점수예요. 라운드마다 4번의 핸드 안에 목표 점수를 모으면 정박지로 이동해요.</p><div class="help-steps"><div><b>좋은 족보를 만들기</b><p>같은 숫자 두 장은 원 페어. 버리기는 선택한 카드를 교체하고 핸드를 쓰지 않아요. 낸 카드와 버린 카드는 그 라운드에 돌아오지 않아요.</p></div><div><b>나만의 조합 키우기</b><p>유물은 최대 4개. 배수 보너스를 더한 뒤 곱셈 효과를 적용해요. 강화는 해당 족보의 기본 칩과 배수를 영구적으로 올려요.</p></div><div><b>9라운드의 바다 건너기</b><p>3라운드마다 특별한 조건이 생겨요. 패와 덱은 매 라운드 새로 섞이고, 유물과 족보 레벨은 항해가 끝날 때까지 유지돼요. 시간 제한은 없어요.</p></div></div><h3>족보 수첩 <small>현재 항해의 레벨 기준</small></h3><div id="hand-guide" class="hand-guide"></div><p class="help-foot">A는 가장 큰 숫자이면서 A·2·3·4·5에도 쓸 수 있어요. J·Q·K는 10칩, A는 11칩, 나머지는 숫자만큼 더해져요. 기본적으로 족보에 해당하는 카드만 칩을 더하지만, 낸 카드는 모두 손패에서 빠져요. 클리어 보상은 기본 4 + 남은 핸드 + 이자(진주 5개당 1, 최대 3) + 특별 라운드 보너스 2예요.</p><button class="play-button full-button" data-close type="button">알겠어요</button></dialog>
+  <dialog id="voyage-dialog" aria-labelledby="voyage-title"><div class="dialog-heading"><span class="eyebrow">A FRESH DECK, A NEW STORY</span><h2 id="voyage-title">어떤 바다로 떠날까요?</h2><button class="dialog-close" data-close type="button" aria-label="새 항해 취소">×</button></div><p id="new-warning">새로 시작하면 현재 항해는 끝나요. 최고 기록은 남아요.</p><button id="start-free" class="voyage-choice" type="button"><span class="choice-icon">≋</span><span><b>자유 항해</b><small>매번 새로운 덱과 새로운 만남.</small></span><span>시작</span></button><button id="start-daily" class="voyage-choice" type="button"><span class="choice-icon">☼</span><span><b>오늘의 도전</b><small id="daily-label">오늘은 모두 같은 씨앗으로 출발해요.</small></span><span>시작</span></button><p class="help-foot">오늘의 도전은 같은 선택을 하면 같은 카드와 상품이 나와요. 여러 번 도전할 수 있어요.</p></dialog>
+  <dialog id="detail-dialog" aria-labelledby="detail-title"><div class="dialog-heading"><span id="detail-kicker" class="eyebrow">RELIC COLLECTION</span><h2 id="detail-title">유물</h2><button class="dialog-close" data-close type="button" aria-label="상세 정보 닫기">×</button></div><div id="detail-content"></div><button id="sell-relic" class="discard-button full-button" type="button" hidden>유물 팔기</button><button class="quiet-button full-button" data-close type="button">닫기</button></dialog>
+  <noscript><p style="padding:24px;color:white">카드를 플레이하려면 JavaScript를 켜 주세요. <a href="../index.html" style="color:#acd7ca">게임 보관함</a></p></noscript>
+</body>
+</html>

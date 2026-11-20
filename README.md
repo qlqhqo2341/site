@@ -10,6 +10,7 @@ https://qlqhqo2341.github.io/site/
 
 게임만 모은 **[Little Arcade 보관함](https://pages.jhan.me/games/index.html)**에서 종류별 필터, 즐겨찾기, 마지막 게임 이어하기를 사용할 수 있습니다.
 
+- [심해 카드실](https://pages.jhan.me/games/tidal-deck/): 포커 족보 × 칩·배수로 목표 점수를 넘기는 카드 항해. 9라운드, 바다 유물 15종, 상점·족보 강화, 특별 라운드, 오늘의 도전, 자동 저장. 짐보 게임의 족보·상점 흐름에서 착안한 독자적인 테마와 그림.
 - [달빛 물약실](https://pages.jhan.me/games/moonlit-sort/): 36개 스테이지의 마법 물 정렬. 액면을 유지하는 붓기 애니메이션, 숨은 색 공개, 단계별 해금과 별 기록, 되돌리기·힌트·빈 병 추가, 자동 저장.
 - [밤의 조각](https://pages.jhan.me/games/night-pieces/): 8×8 블록 퍼즐. 드래그·터치 배치, 회전, 연속 제거 보너스, 매일 30수 도전, 브라우저 자동 저장.
 - [귀가선 2048](https://pages.jhan.me/games/train-2048/): 스와이프로 숫자를 합치는 2048.
@@ -21,13 +22,13 @@ https://qlqhqo2341.github.io/site/
 
 보관함은 `games/index.html`, 각 게임은 `games/게임이름/index.html`에 있습니다. 공통 파일은 `games/shared/`, 달빛 물약실 전용 파일은 `games/moonlit-sort/`에 모았습니다.
 
-공통 퍼즐들은 각 HTML에서 `../shared/` 아래의 `arcade-catalog.js`, `arcade-engines.js`, `arcade-play.js`, `arcade.css`를 불러옵니다. 달빛 물약실은 `potion-engine.js`, `potion-art.js`, `potion.js`, `potion.css`를 사용하고, 힌트 탐색은 `potion-solver.js` Worker에서 실행합니다. 외부 라이브러리나 빌드 과정 없이 정적으로 호스팅할 수 있습니다.
+공통 퍼즐들은 각 HTML에서 `../shared/` 아래의 `arcade-catalog.js`, `arcade-engines.js`, `arcade-play.js`, `arcade.css`를 불러옵니다. 달빛 물약실은 `potion-engine.js`, `potion-art.js`, `potion.js`, `potion.css`를 사용하고, 힌트 탐색은 `potion-solver.js` Worker에서 실행합니다. 심해 카드실은 `games/tidal-deck/` 안의 `tidal-engine.js`, `tidal-art.js`, `tidal.js`, `tidal.css`를 사용합니다. 외부 라이브러리나 빌드 과정 없이 정적으로 호스팅할 수 있습니다.
 
 게임 규칙 검증: `node --test tests/*.test.cjs`
 
 ## 오프라인 플레이
 
-온라인에서 게임 보관함이나 게임을 열어 **오프라인 준비 완료**를 확인하면, 방문하지 않은 게임까지 모두 저장됩니다. 이후 같은 브라우저에서 보관함과 게임 8개를 오프라인으로 열 수 있습니다. 진행 기록과 즐겨찾기는 기존처럼 브라우저에 남습니다. 브라우저 데이터를 지우면 온라인에서 다시 저장해야 합니다.
+온라인에서 게임 보관함이나 게임을 열어 **오프라인 준비 완료**를 확인하면, 방문하지 않은 게임까지 모두 저장됩니다. 이후 같은 브라우저에서 보관함과 게임 9개를 오프라인으로 열 수 있습니다. 진행 기록과 즐겨찾기는 기존처럼 브라우저에 남습니다. 브라우저 데이터를 지우면 온라인에서 다시 저장해야 합니다.
 
 새 배포는 파일 전체의 SHA-256이 일치한 뒤 준비되며, 실행 중인 버전은 게임 창을 모두 닫을 때까지 유지됩니다. 서비스워커 등록 범위는 `/games/`이며 다른 도구 페이지·API·외부 요청에는 적용되지 않습니다. 배포 경로가 `/site/`인 GitHub Pages에서도 동작합니다.
 

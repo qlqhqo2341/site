@@ -6,8 +6,8 @@ const {createHarness,MemoryCacheStorage,release,gameRoot,sha256}=require('./help
 test('offline release covers every game, its dependencies and the potion hint Worker',()=>{
   const expected=require('../scripts/build-offline-cache.cjs').source();
   assert.equal(fs.readFileSync(path.join(gameRoot,'offline-assets.js'),'utf8'),expected,'Run node scripts/build-offline-cache.cjs after changing game files.');
-  assert.equal(release.gameCount,8);assert.equal(new Set(release.assets.map(asset=>asset.path)).size,release.assets.length);
-  for(const name of ['index.html','moonlit-sort/index.html','night-pieces/index.html','train-2048/index.html','lights-out/index.html','water-sort/index.html','number-trail/index.html','memory-garden/index.html','star-path/index.html','moonlit-sort/potion-solver.js','moonlit-sort/potion-engine.js','shared/offline-client.js','shared/offline.css'])assert.ok(release.assets.some(asset=>asset.path===name),name);
+  assert.equal(release.gameCount,9);assert.equal(new Set(release.assets.map(asset=>asset.path)).size,release.assets.length);
+  for(const name of ['index.html','tidal-deck/index.html','tidal-deck/tidal-engine.js','tidal-deck/tidal-art.js','tidal-deck/tidal.js','tidal-deck/tidal.css','moonlit-sort/index.html','night-pieces/index.html','train-2048/index.html','lights-out/index.html','water-sort/index.html','number-trail/index.html','memory-garden/index.html','star-path/index.html','moonlit-sort/potion-solver.js','moonlit-sort/potion-engine.js','shared/offline-client.js','shared/offline.css'])assert.ok(release.assets.some(asset=>asset.path===name),name);
   for(const asset of release.assets){assert.equal(asset.sha256,sha256(fs.readFileSync(path.join(gameRoot,asset.path))));if(asset.path.endsWith('.html')){const html=fs.readFileSync(path.join(gameRoot,asset.path),'utf8');assert.equal((html.match(/src="(?:\.\.\/)?shared\/offline-client.js"/g)||[]).length,1);assert.match(html,/href="(?:\.\.\/)?shared\/offline.css"/);}}
 });
 
@@ -15,7 +15,7 @@ test('first install verifies all files and reports ready only after full storage
   const h=createHarness();assert.equal((await h.message('ARCADE_OFFLINE_GET_STATUS')).ready,false);
   await h.install();assert.equal(h.calls.length,release.assets.length);assert.equal(h.skipped,0);
   await h.activate();assert.equal(h.claimed,1);
-  const status=await h.message('ARCADE_OFFLINE_GET_STATUS');assert.equal(status.ready,true);assert.equal(status.gameCount,8);assert.equal(status.version,release.version);
+  const status=await h.message('ARCADE_OFFLINE_GET_STATUS');assert.equal(status.ready,true);assert.equal(status.gameCount,9);assert.equal(status.version,release.version);
 });
 
 for(const scope of ['https://example.test/games/','https://example.test/site/games/'])test(`every game and asset opens with no network at ${scope}`,async()=>{
