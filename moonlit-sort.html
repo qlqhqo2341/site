@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101b32">
+  <meta name="description" content="작은 병에 색을 모으는 달빛 물약실. 36개 스테이지, 가려진 물약, 붓는 애니메이션, 빈 병 추가와 별빛 힌트. 진행은 자동 저장돼요.">
+  <title>달빛 물약실 · Moonlit Sort</title>
+  <link rel="stylesheet" href="potion.css">
+  <script src="potion-engine.js" defer></script>
+  <script src="potion-art.js" defer></script>
+  <script src="potion.js" defer></script>
+</head>
+<body>
+  <div class="night-sky" aria-hidden="true"></div>
+  <main class="game-screen">
+    <header class="topbar"><a class="back-link" href="games.html"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>게임 보관함</a><div class="top-actions"><button id="sound" class="icon-button" type="button" aria-label="소리 켜기" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5 5 9H2v6h3l5 4V5Zm5 4 6 6m0-6-6 6"/></svg></button><button id="help" class="icon-button" type="button" aria-label="게임 방법">?</button></div></header>
+    <section class="title-area" aria-labelledby="title"><div class="moon-mark" aria-hidden="true"><svg viewBox="0 0 56 56"><path d="M36 7A22 22 0 1 0 49 39 23 23 0 0 1 36 7Z" fill="#edc98d"/><path d="m42 10 2-5 2 5 5 2-5 2-2 5-2-5-5-2Z" fill="#f7dfac"/></svg></div><div class="chapter-line"><button id="map" class="level-pill" type="button" aria-label="스테이지 지도 열기">STAGE <b id="level">1</b><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="5" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="5" cy="15" r="1.5"/><circle cx="15" cy="15" r="1.5"/></svg></button><span id="chapter">초승달 정원</span></div><h1 id="title">달빛 물약실</h1><p>같은 색을 모아, 작은 마법을 완성해요.</p></section>
+    <div class="round-stats" aria-label="이번 스테이지 기록"><span>이동 <b id="moves">0</b></span><span>정리 <b id="sorted">0 / 3</b></span><span class="total-stars"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg><b id="total-stars">0</b><span class="sr-only">누적 별</span></span></div>
+    <section class="alchemy-table" aria-label="물약 정렬 퍼즐"><div class="table-ornament" aria-hidden="true">✧</div><div id="board" class="bottle-grid" role="group" aria-label="물약 병"></div><div id="celebration" class="celebration" aria-hidden="true"></div></section>
+    <p id="status" class="status" role="status" aria-live="polite">보낼 병을 고른 다음, 받을 병을 누르세요.</p>
+    <div class="tools" role="group" aria-label="마법 도구"><button id="undo" class="tool" type="button" disabled><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5-5 5 5 5M4 10h9a6 6 0 1 1 0 12" transform="translate(0 -2)"/></svg></span><span>되돌리기</span></button><button id="hint" class="tool" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 20 11-12M15 3l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3ZM5 4v4M3 6h4m13 10v4m-2-2h4"/></svg></span><span>별빛 힌트</span></button><button id="extra" class="tool" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v4l3 4v9q0 2-2 2H7q-2 0-2-2v-9l3-4V3Zm0 0h8m-4 10v5m-2.5-2.5h5"/></svg></span><span>빈 병 추가</span><small id="extra-left">1회</small></button><button id="reset" class="tool" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 8a8 8 0 1 0 1 9M19 3v5h-5"/></svg></span><span>다시 풀기</span></button></div>
+    <footer class="game-footer"><span id="save-status">진행 자동 저장</span><span>시간 제한 없이, 천천히.</span></footer>
+  </main>
+  <div id="pour-ghost" class="pour-ghost" aria-hidden="true" hidden></div><svg id="pour-stream" class="pour-stream" aria-hidden="true"><path id="stream-shadow"/><path id="stream-color"/></svg>
+  <dialog id="map-dialog" aria-labelledby="map-title"><div class="dialog-heading"><div><p class="eyebrow">YOUR LITTLE JOURNEY</p><h2 id="map-title">달빛을 따라가는 여정</h2></div><button id="close-map" class="icon-button" type="button" aria-label="스테이지 지도 닫기">×</button></div><p class="dialog-copy">한 스테이지씩 열려요. 모은 별과 최고 기록은 남아요.</p><div id="stage-map"></div></dialog>
+  <dialog id="help-dialog" aria-labelledby="help-title"><p class="eyebrow">A LITTLE ALCHEMY</p><h2 id="help-title">한 병에, 한 가지 색.</h2><ol class="help-steps"><li>보낼 병을 누른 뒤 받을 병을 누르세요. 같은 병을 다시 누르면 선택이 풀려요.</li><li>빈 병이나 맨 위가 같은 색인 병에만 부을 수 있어요. 한 병에는 네 칸까지 들어가요.</li><li>맨 위에 이어진 같은 색이 자리가 되는 만큼 함께 이동해요. 정리된 병은 마개가 닫혀요.</li><li>9번째 스테이지부터 <b>?</b> 색이 등장해요. 위의 물약을 덜어 내면 숨은 색이 보여요.</li><li>막혔다면 되돌리기, 별빛 힌트, 스테이지당 한 번의 빈 병 추가를 써 보세요. 도구 사용은 별 평가에 반영돼요.</li></ol><p class="dialog-copy">시간 제한과 광고는 없어요. 스테이지와 기록은 이 브라우저에 저장돼요.</p><button id="close-help" class="primary full" type="button">좋아요, 시작할게요</button></dialog>
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title"><h2 id="confirm-title">다시 시작할까요?</h2><p id="confirm-copy" class="dialog-copy">현재 스테이지가 처음 배치로 돌아가요. 모은 별과 완료 기록은 그대로 남아요.</p><div class="dialog-actions"><button id="cancel" class="secondary" type="button" autofocus>계속할래요</button><button id="confirm" class="primary" type="button">시작하기</button></div></dialog>
+  <dialog id="win-dialog" class="win-dialog" aria-labelledby="win-title"><div class="win-moon" aria-hidden="true">☾</div><p class="eyebrow">A LITTLE MAGIC, COMPLETE.</p><h2 id="win-title">물약이 모두 완성됐어요!</h2><div id="win-stars" class="win-stars" aria-label="별 평가"></div><p id="win-copy" class="dialog-copy"></p><button id="next" class="primary full" type="button">다음 스테이지</button><div class="win-secondary"><button id="win-map" class="text-button" type="button">여정 보기</button><button id="replay" class="text-button" type="button">다시 도전</button></div></dialog>
+  <noscript><p style="padding:24px">달빛 물약실을 플레이하려면 자바스크립트를 켜 주세요. <a href="games.html">게임 보관함</a></p></noscript>
+</body>
+</html>

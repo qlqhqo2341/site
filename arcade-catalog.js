@@ -1,6 +1,7 @@
 (function () {
   'use strict';
   const games = [
+    {id:'potions',name:'달빛 물약실',en:'MOONLIT SORT',href:'moonlit-sort.html',tag:'마법 정렬',group:'slow',accent:'#edc98d',description:'색을 모아, 한 병의 작은 마법을 완성해요.',detail:'36개 스테이지 · 숨은 색 · 마법 도구',key:'little-arcade:potions:v1'},
     {id:'night',name:'밤의 조각',en:'NIGHT PIECES',href:'night-pieces.html',tag:'블록 퍼즐',group:'think',accent:'#b9abdf',description:'세 조각을 놓고, 꽉 찬 한 줄을 비워요.',detail:'드래그 · 콤보 · 매일 30수',key:'night-pieces-v1'},
     {id:'water',name:'물빛 정렬',en:'COLOR REVERIE',href:'water-sort.html',tag:'색 정렬',group:'slow',accent:'#e8ae91',description:'조금씩 옮겨, 같은 색끼리 한 병에.',detail:'4–6색 · 되돌리기 · 시간 제한 없음',key:'little-arcade:water:v1'},
     {id:'pipes',name:'별의 길',en:'CONSTELLATION',href:'star-path.html',tag:'회전 퍼즐',group:'think',accent:'#a7cbb9',description:'길을 돌려 모든 조각에 빛을 보내요.',detail:'회전 · 연결 미리보기 · 한 칸 도움',key:'little-arcade:pipes:v1'},
@@ -12,7 +13,15 @@
   function preview(id) {
     let shapes='';const rect=(x,y,w,h,fill,rx=4)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}"/>`;
     const text=(x,y,label,color='#f2eee7',size=15)=>`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" fill="${color}" font-family="system-ui,sans-serif" font-size="${size}" font-weight="650">${label}</text>`;
-    if(id==='water') {
+    if(id==='potions') {
+      shapes+='<path d="M213 19a18 18 0 1 0 14 26 19 19 0 0 1-14-26Z" fill="#d8bd88" opacity=".85"/><path d="m39 25 2-5 2 5 5 2-5 2-2 5-2-5-5-2Z" fill="#ebd3a2"/>';
+      const palette=['#a775ed','#49c9ac','#f3a25f','#62b9ed'];
+      [[0,1,2],[2,0,1,0],[1,2,1,2],[]].forEach((tube,i)=>{
+        const x=54+i*39;shapes+=`<path d="M${x+8} 46h14v11l7 8v64q0 10-10 10h-8q-11 0-11-10V65l8-8V46Z" fill="#a4d4e50a" stroke="#9cc5d4" stroke-opacity=".8" stroke-width="1.3"/>`;
+        tube.forEach((color,j)=>{shapes+=rect(x+2,119-j*18,25,18,palette[color],j?0:3);});
+        shapes+=`<path d="M${x+4} 70v51" stroke="white" stroke-width="1.5" stroke-opacity=".25"/><rect x="${x+6}" y="43" width="18" height="5" rx="2" fill="#17283c" stroke="#9cc5d4" stroke-width="1.2"/>`;
+      });
+    } else if(id==='water') {
       const palette=['#b4a1d5','#8fbea9','#dca47c','#80acc5'];
       [[0,1,2,0],[1,2,0,1],[2,0,1,2],[3,3,3,3],[],[]].forEach((tube,i)=>{
         const x=30+i*34;shapes+=`<path d="M${x} 47v70q0 8 8 8h6q8 0 8-8V47" fill="#1b2a32" stroke="#50616a" stroke-width="2"/>`;

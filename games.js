@@ -4,12 +4,14 @@
   let favorites=new Set(),filter='all';
   try {const saved=JSON.parse(localStorage.getItem('little-arcade:favorites'));if(Array.isArray(saved))favorites=new Set(saved.filter(id=>games.some(game=>game.id===id)));}catch{}
   function progress(game){
-    try{const value=JSON.parse(localStorage.getItem(game.key));if(game.id==='night'){const state=value?.games?.[value?.mode||'endless']?.state;return state?.moves>0?'이어서 하기':'플레이';}if(game.id==='train')return value?.state?.moves>0?'이어서 하기':'플레이';if(value?.awarded)return '다시 도전';return value?.state?.moves>0||value?.state?.open?.length?'이어서 하기':'플레이';}catch{return '플레이';}
+    try{const value=JSON.parse(localStorage.getItem(game.key));if(game.id==='potions')return value?.active?.round?.moves>0?'여정 이어가기':'플레이';if(game.id==='night'){const state=value?.games?.[value?.mode||'endless']?.state;return state?.moves>0?'이어서 하기':'플레이';}if(game.id==='train')return value?.state?.moves>0?'이어서 하기':'플레이';if(value?.awarded)return '다시 도전';return value?.state?.moves>0||value?.state?.open?.length?'이어서 하기':'플레이';}catch{return '플레이';}
   }
   let last;
   try {const saved=JSON.parse(localStorage.getItem('little-arcade:last'));last=games.find(game=>game.id===saved?.id);}catch{}
   if(!last)last=games.find(game=>progress(game)==='이어서 하기');
-  const feature=last||games.find(game=>game.id==='water');
+  const feature=last||games.find(game=>game.id==='potions')||games.find(game=>game.id==='water')||games[0];
+  const collectionCount=$('collection-count')||document.querySelector('#collection-title span'),allCount=$('all-count')||document.querySelector('[data-filter="all"] span');
+  if(collectionCount)collectionCount.textContent=String(games.length).padStart(2,'0');if(allCount)allCount.textContent=games.length;
   $('featured').href=feature.href;$('featured-name').textContent=feature.name;$('featured-tag').textContent=feature.en;$('featured-art').innerHTML=preview(feature.id);$('featured-label').textContent=last?'마지막에 하던 한 판':'오늘의 한 판';$('featured-action').textContent=last?'이어서 →':'플레이 →';
   games.forEach((game,index)=>{
     const card=document.createElement('article');card.className='game-card';card.dataset.id=game.id;card.style.setProperty('--tint',`${game.accent}18`);

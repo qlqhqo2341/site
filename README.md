@@ -10,6 +10,7 @@ https://qlqhqo2341.github.io/site/
 
 게임만 모은 **[Little Arcade 보관함](https://pages.jhan.me/games.html)**에서 종류별 필터, 즐겨찾기, 마지막 게임 이어하기를 사용할 수 있습니다.
 
+- [달빛 물약실](https://pages.jhan.me/moonlit-sort.html): 36개 스테이지의 마법 물 정렬. 액면을 유지하는 붓기 애니메이션, 숨은 색 공개, 단계별 해금과 별 기록, 되돌리기·힌트·빈 병 추가, 자동 저장.
 - [밤의 조각](https://pages.jhan.me/night-pieces.html): 8×8 블록 퍼즐. 드래그·터치 배치, 회전, 연속 제거 보너스, 매일 30수 도전, 브라우저 자동 저장.
 - [귀가선 2048](https://pages.jhan.me/train-2048.html): 스와이프로 숫자를 합치는 2048.
 - [물빛 정렬](https://pages.jhan.me/water-sort.html): 같은 색 물을 한 병에 모으는 4–6색 정렬 퍼즐.
@@ -18,6 +19,6 @@ https://qlqhqo2341.github.io/site/
 - [잔상의 정원](https://pages.jhan.me/memory-garden.html): 8–12쌍 그림 기억 게임. 카드 뒤집기, 한 번 전체 보기, 시도 기록.
 - [숫자 산책](https://pages.jhan.me/number-trail.html): 3×3·4×4 숫자 슬라이드. 터치·방향키·스와이프 지원.
 
-새 게임은 각 HTML에서 `arcade-catalog.js`, `arcade-engines.js`, `arcade-play.js`, `arcade.css`를 불러옵니다. 외부 라이브러리나 빌드 과정 없이 정적으로 호스팅할 수 있습니다.
+공통 퍼즐들은 각 HTML에서 `arcade-catalog.js`, `arcade-engines.js`, `arcade-play.js`, `arcade.css`를 불러옵니다. 달빛 물약실은 `potion-engine.js`, `potion-art.js`, `potion.js`, `potion.css`를 사용하고, 힌트 탐색은 `potion-solver.js` Worker에서 실행합니다. 외부 라이브러리나 빌드 과정 없이 정적으로 호스팅할 수 있습니다.
 
 게임 규칙 검증: `node --test tests/*.test.cjs`
