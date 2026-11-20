@@ -1,7 +1,8 @@
 (function(){
   'use strict';
-  const scriptURL=new URL(document.currentScript?.src||'offline-client.js',document.baseURI);
-  const workerURL=new URL('games-sw.js',scriptURL),scope=new URL('./',workerURL);
+  const source=document.currentScript||Array.from(document.scripts).find(script=>script.src.endsWith('/shared/offline-client.js'));
+  const scriptURL=new URL(source?.src||'shared/offline-client.js',document.baseURI);
+  const scope=new URL('../',scriptURL),workerURL=new URL('games-sw.js',scope);
   let panel=document.getElementById('arcade-offline-status');
   if(!panel){
     panel=document.createElement('div');panel.id='arcade-offline-status';panel.className='arcade-offline-note';panel.setAttribute('role','status');panel.setAttribute('aria-live','polite');
@@ -10,7 +11,7 @@
   }
   const title=panel.querySelector('[data-offline-title]'),detail=panel.querySelector('[data-offline-detail]'),retry=panel.querySelector('[data-offline-retry]');
   const registrations=new WeakSet(),workers=new WeakSet();
-  let registration=null,ready=false,waiting=false,loading=true,failed=false,unsupported=false,gameCount=0,starting=null,refreshing=null;
+  let registration=null,ready=false,waiting=false,loading=true,failed=false,unsupported=false,gameCount=0,starting=null,refreshing=null,retiring=null,retired=false;
   const own=worker=>worker?.scriptURL===workerURL.href;
   function render(){
     const offline=navigator.onLine===false,pending=loading&&!failed;
@@ -36,6 +37,19 @@
     if(value?.type!=='ARCADE_OFFLINE_STATUS'||typeof value.ready!=='boolean')return;
     if(Number.isInteger(value.gameCount)&&value.gameCount>0)gameCount=value.gameCount;
     ready=value.ready;failed=!ready&&value.error===true;loading=false;waiting=Boolean(registration?.waiting);render();
+    if(ready)retireLegacy(registration?.active||navigator.serviceWorker?.controller);
+  }
+  function retireLegacy(worker){
+    if(retired||retiring||!own(worker))return;
+    retiring=(async()=>{
+      const parent=new URL('../',scope),oldURL=new URL('games-sw.js',parent).href;
+      const old=await navigator.serviceWorker.getRegistration(parent.href);
+      if(old){
+        if(old.scope!==parent.href||![old.active,old.waiting,old.installing].some(value=>value?.scriptURL===oldURL))return;
+        await old.unregister();
+      }
+      const result=await request(worker,'ARCADE_OFFLINE_CLEAN_LEGACY');retired=result?.blocked===false;
+    })().catch(()=>{}).finally(()=>{retiring=null;});
   }
   function refresh(worker=navigator.serviceWorker?.controller){
     if(!own(worker))return Promise.resolve();

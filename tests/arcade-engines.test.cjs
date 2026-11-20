@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const E = require('../arcade-engines.js');
+const E = require('../games/shared/arcade-engines.js');
 const copy = value => JSON.parse(JSON.stringify(value));
 
 test('all five games generate deterministic, valid, unfinished puzzles', () => {

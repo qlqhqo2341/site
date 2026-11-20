@@ -1,7 +1,7 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const E=require('../potion-engine.js');
-const A=require('../potion-art.js');
+const E=require('../games/moonlit-sort/potion-engine.js');
+const A=require('../games/moonlit-sort/potion-art.js');
 const copy=value=>JSON.parse(JSON.stringify(value));
 
 test('all 36 stages are deterministic, valid, unfinished and progressively introduce colors',()=>{
@@ -108,13 +108,13 @@ test('bottle artwork masks unknown colors and supports fractional animated pours
 });
 
 test('game library includes the new game and keeps counts, previews and local links consistent',()=>{
-  const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),repo=path.join(__dirname,'..'),context=vm.createContext({window:{}});
-  vm.runInContext(fs.readFileSync(path.join(repo,'arcade-catalog.js'),'utf8'),context);
+  const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),repo=path.join(__dirname,'../games'),context=vm.createContext({window:{}});
+  vm.runInContext(fs.readFileSync(path.join(repo,'shared/arcade-catalog.js'),'utf8'),context);
   const {games,preview}=context.window.ArcadeCatalog;
   assert.equal(new Set(games.map(game=>game.id)).size,games.length);assert.ok(games.some(game=>game.id==='potions'));
-  games.forEach(game=>{assert.ok(fs.existsSync(path.join(repo,game.href)));assert.ok(preview(game.id).startsWith('<svg'));});
-  const html=fs.readFileSync(path.join(repo,'games.html'),'utf8');
+  games.forEach(game=>{assert.ok(fs.existsSync(path.join(repo,game.href,'index.html')));assert.ok(preview(game.id).startsWith('<svg'));});
+  const html=fs.readFileSync(path.join(repo,'index.html'),'utf8');
   assert.equal(Number(html.match(/id="collection-count">(\d+)/)[1]),games.length);assert.equal(Number(html.match(/id="all-count">(\d+)/)[1]),games.length);
-  const page=fs.readFileSync(path.join(repo,'moonlit-sort.html'),'utf8');
-  for(const match of page.matchAll(/(?:src|href)="([^"]+)"/g))assert.ok(fs.existsSync(path.join(repo,match[1])));
+  const page=fs.readFileSync(path.join(repo,'moonlit-sort/index.html'),'utf8');
+  for(const match of page.matchAll(/(?:src|href)="([^"]+)"/g))assert.ok(fs.existsSync(path.join(repo,'moonlit-sort',match[1])));
 });

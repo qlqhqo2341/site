@@ -1,14 +1,14 @@
 (function () {
   'use strict';
   const games = [
-    {id:'potions',name:'달빛 물약실',en:'MOONLIT SORT',href:'moonlit-sort.html',tag:'마법 정렬',group:'slow',accent:'#edc98d',description:'색을 모아, 한 병의 작은 마법을 완성해요.',detail:'36개 스테이지 · 숨은 색 · 마법 도구',key:'little-arcade:potions:v1'},
-    {id:'night',name:'밤의 조각',en:'NIGHT PIECES',href:'night-pieces.html',tag:'블록 퍼즐',group:'think',accent:'#b9abdf',description:'세 조각을 놓고, 꽉 찬 한 줄을 비워요.',detail:'드래그 · 콤보 · 매일 30수',key:'night-pieces-v1'},
-    {id:'water',name:'물빛 정렬',en:'COLOR REVERIE',href:'water-sort.html',tag:'색 정렬',group:'slow',accent:'#e8ae91',description:'조금씩 옮겨, 같은 색끼리 한 병에.',detail:'4–6색 · 되돌리기 · 시간 제한 없음',key:'little-arcade:water:v1'},
-    {id:'pipes',name:'별의 길',en:'CONSTELLATION',href:'star-path.html',tag:'회전 퍼즐',group:'think',accent:'#a7cbb9',description:'길을 돌려 모든 조각에 빛을 보내요.',detail:'회전 · 연결 미리보기 · 한 칸 도움',key:'little-arcade:pipes:v1'},
-    {id:'lights',name:'불빛 끄기',en:'LIGHTS AFTER DARK',href:'lights-out.html',tag:'논리 퍼즐',group:'quick',accent:'#e1c17e',description:'하나를 누르면 십자로 바뀌는 불빛.',detail:'4×4–6×6 · 풀 수 있는 배치 · 힌트',key:'little-arcade:lights:v1'},
-    {id:'memory',name:'잔상의 정원',en:'AFTERIMAGE',href:'memory-garden.html',tag:'기억력',group:'quick',accent:'#d5a8b8',description:'뒤집힌 작은 그림의 짝을 찾아요.',detail:'8–12쌍 · 한 번 미리보기 · 기록',key:'little-arcade:memory:v1'},
-    {id:'number',name:'숫자 산책',en:'ONE EMPTY SPACE',href:'number-trail.html',tag:'슬라이드',group:'think',accent:'#95bbd5',description:'빈칸을 따라 숫자를 차례로 맞춰요.',detail:'3×3 · 4×4 · 스와이프와 방향키',key:'little-arcade:number:v1'},
-    {id:'train',name:'귀가선 2048',en:'THE WAY HOME',href:'train-2048.html',tag:'숫자 합치기',group:'slow',accent:'#98bba2',description:'같은 숫자를 모으며 집으로 가는 길.',detail:'스와이프 · 자동 저장 · 한 수 되돌리기',key:'way-home-2048-v1'}
+    {id:'potions',name:'달빛 물약실',en:'MOONLIT SORT',href:'moonlit-sort/',tag:'마법 정렬',group:'slow',accent:'#edc98d',description:'색을 모아, 한 병의 작은 마법을 완성해요.',detail:'36개 스테이지 · 숨은 색 · 마법 도구',key:'little-arcade:potions:v1'},
+    {id:'night',name:'밤의 조각',en:'NIGHT PIECES',href:'night-pieces/',tag:'블록 퍼즐',group:'think',accent:'#b9abdf',description:'세 조각을 놓고, 꽉 찬 한 줄을 비워요.',detail:'드래그 · 콤보 · 매일 30수',key:'night-pieces-v1'},
+    {id:'water',name:'물빛 정렬',en:'COLOR REVERIE',href:'water-sort/',tag:'색 정렬',group:'slow',accent:'#e8ae91',description:'조금씩 옮겨, 같은 색끼리 한 병에.',detail:'4–6색 · 되돌리기 · 시간 제한 없음',key:'little-arcade:water:v1'},
+    {id:'pipes',name:'별의 길',en:'CONSTELLATION',href:'star-path/',tag:'회전 퍼즐',group:'think',accent:'#a7cbb9',description:'길을 돌려 모든 조각에 빛을 보내요.',detail:'회전 · 연결 미리보기 · 한 칸 도움',key:'little-arcade:pipes:v1'},
+    {id:'lights',name:'불빛 끄기',en:'LIGHTS AFTER DARK',href:'lights-out/',tag:'논리 퍼즐',group:'quick',accent:'#e1c17e',description:'하나를 누르면 십자로 바뀌는 불빛.',detail:'4×4–6×6 · 풀 수 있는 배치 · 힌트',key:'little-arcade:lights:v1'},
+    {id:'memory',name:'잔상의 정원',en:'AFTERIMAGE',href:'memory-garden/',tag:'기억력',group:'quick',accent:'#d5a8b8',description:'뒤집힌 작은 그림의 짝을 찾아요.',detail:'8–12쌍 · 한 번 미리보기 · 기록',key:'little-arcade:memory:v1'},
+    {id:'number',name:'숫자 산책',en:'ONE EMPTY SPACE',href:'number-trail/',tag:'슬라이드',group:'think',accent:'#95bbd5',description:'빈칸을 따라 숫자를 차례로 맞춰요.',detail:'3×3 · 4×4 · 스와이프와 방향키',key:'little-arcade:number:v1'},
+    {id:'train',name:'귀가선 2048',en:'THE WAY HOME',href:'train-2048/',tag:'숫자 합치기',group:'slow',accent:'#98bba2',description:'같은 숫자를 모으며 집으로 가는 길.',detail:'스와이프 · 자동 저장 · 한 수 되돌리기',key:'way-home-2048-v1'}
   ];
   function preview(id) {
     let shapes='';const rect=(x,y,w,h,fill,rx=4)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}"/>`;

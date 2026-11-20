@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const html = fs.readFileSync(path.join(__dirname, '..', 'night-pieces.html'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '..', 'games', 'night-pieces', 'index.html'), 'utf8');
 const context = vm.createContext({ window: {} });
 vm.runInContext(html.match(/<script id="puzzle-engine">([\s\S]*?)<\/script>/)[1], context);
 const G = context.window.NightPieces;
