@@ -22,3 +22,19 @@ https://qlqhqo2341.github.io/site/
 공통 퍼즐들은 각 HTML에서 `arcade-catalog.js`, `arcade-engines.js`, `arcade-play.js`, `arcade.css`를 불러옵니다. 달빛 물약실은 `potion-engine.js`, `potion-art.js`, `potion.js`, `potion.css`를 사용하고, 힌트 탐색은 `potion-solver.js` Worker에서 실행합니다. 외부 라이브러리나 빌드 과정 없이 정적으로 호스팅할 수 있습니다.
 
 게임 규칙 검증: `node --test tests/*.test.cjs`
+
+## 오프라인 플레이
+
+온라인에서 게임 보관함이나 게임을 열어 **오프라인 준비 완료**를 확인하면, 방문하지 않은 게임까지 모두 저장됩니다. 이후 같은 브라우저에서 보관함과 게임 8개를 오프라인으로 열 수 있습니다. 진행 기록과 즐겨찾기는 기존처럼 브라우저에 남습니다. 브라우저 데이터를 지우면 온라인에서 다시 저장해야 합니다.
+
+새 배포는 파일 전체의 SHA-256이 일치한 뒤 준비되며, 실행 중인 버전은 게임 창을 모두 닫을 때까지 유지됩니다. 오프라인 저장 범위는 보관함과 게임뿐이며 다른 도구 페이지·API·외부 요청에는 적용되지 않습니다. 배포 경로가 `/site/`인 GitHub Pages에서도 동작합니다.
+
+게임·공통 파일·서비스워커를 수정하거나 게임을 추가한 뒤에는 반드시 저장 목록을 다시 생성하고 함께 커밋하세요.
+
+```sh
+node scripts/build-offline-cache.cjs
+node scripts/build-offline-cache.cjs --check
+node --test tests/*.test.cjs
+```
+
+`offline-assets.js`는 게임 카탈로그에서 HTML·스타일·스크립트·힌트 Worker 의존성을 수집한 결과입니다. 목록과 파일 내용이 달라지면 테스트가 실패해 갱신을 요구합니다. `games-sw.js`는 파일 검증과 버전별 캐시를, `offline-client.js`는 등록·준비 상태·복구를 담당합니다.

@@ -1,0 +1,13 @@
+.arcade-offline-panel { display:flex; gap:14px; align-items:center; border:1px solid #cbd7c5; background:#eaf0e4; border-radius:12px; padding:17px 19px; margin:0 0 28px; color:#284a3c; }
+.arcade-offline-panel>svg { width:26px; height:26px; flex:0 0 26px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+.arcade-offline-panel>div { flex:1; min-width:0; }
+.arcade-offline-panel strong { display:block; font-size:.875rem; font-weight:650; line-height:1.6; letter-spacing:-.25px; }
+.arcade-offline-panel p { margin:4px 0 0; font-size:.875rem; line-height:1.7; color:#5c725f; word-break:keep-all; }
+.arcade-offline-panel [data-offline-retry] { border:1px solid #b7c8b0; background:transparent; color:inherit; border-radius:7px; padding:9px 12px; font:inherit; font-size:.875rem; cursor:pointer; white-space:nowrap; }
+.arcade-offline-panel[data-state=loading]>svg { opacity:.6; }
+.arcade-offline-panel[data-state=error],.arcade-offline-panel[data-state=unsupported] { background:#f0eadd; border-color:#d8c9b2; color:#785a3a; }
+.arcade-offline-note { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:8px 13px; max-width:760px; margin:13px auto 17px; padding:0 9px; text-align:center; font-size:.875rem; line-height:1.65; color:inherit; opacity:.78; word-break:keep-all; }
+.arcade-offline-note [data-offline-retry] { border:1px solid currentColor; border-radius:6px; color:inherit; background:transparent; font:inherit; padding:5px 9px; cursor:pointer; }
+.arcade-offline-panel [hidden],.arcade-offline-note [hidden] { display:none!important; }
+.arcade-offline-panel button:focus-visible,.arcade-offline-note button:focus-visible { outline:2px solid currentColor; outline-offset:4px; }
+@media(max-width:600px) { .arcade-offline-panel { align-items:flex-start; flex-wrap:wrap; padding:15px; gap:10px; margin-bottom:24px; }.arcade-offline-panel>svg { margin-top:2px; width:23px; height:23px; flex-basis:23px; }.arcade-offline-panel [data-offline-retry] { margin-left:33px; }.arcade-offline-note { margin-top:12px; margin-bottom:15px; } }
