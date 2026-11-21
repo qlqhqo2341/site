@@ -342,6 +342,9 @@
     const button=event.target.closest('[data-relic]');
     if(button&&!busy&&!isTouchClick(event,button))showRelicDetails(relicById(button.dataset.relic));
   });
+  // Safari can begin text selection before the long-press context menu event.
+  $('deck').addEventListener('touchstart',event=>event.preventDefault(),{passive:false});
+  $('deck').addEventListener('selectstart',event=>event.preventDefault());
   $('deck').addEventListener('click',event=>{
     if(!busy&&!isTouchClick(event,$('deck')))showDeckDetails();
   });

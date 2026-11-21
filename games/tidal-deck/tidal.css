@@ -223,10 +223,12 @@ dialog>p,.help-steps p{font-size:16px}.guide-row{font-size:14px}.guide-row b{fon
   .notice { margin-top: 3px; }
 }
 
-#deck, #relics [data-relic] {
+#deck, #deck *, #relics [data-relic], #relics [data-relic] * {
   -webkit-touch-callout: none;
+  -webkit-user-select: none;
   user-select: none;
 }
+#deck > span { pointer-events: none; }
 .detail-held { outline: 1px solid var(--gold); outline-offset: 2px; }
 .press-tip {
   position: fixed;
