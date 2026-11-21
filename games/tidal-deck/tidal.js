@@ -5,6 +5,8 @@
   const descriptions=['가장 높은 카드 한 장','같은 숫자 2장','같은 숫자 2장씩 두 쌍','같은 숫자 3장','연속된 숫자 5장','같은 무늬 5장','트리플 + 원 페어','같은 숫자 4장','같은 무늬의 연속 숫자 5장'];
   const depthNames=['산호 정원','푸른 침묵','별 없는 바다'];
   let data={version:1,run:null,records:{best:0,wins:0,runs:0},sound:false},selected=new Set(),sort='rank',busy=false,audio,timer,calculation=null,detailRelic=null;
+  let activePress=null, lastTouch=null;
+  const pressControls='#deck, #relics [data-relic]';
   const randomSeed=()=>{const values=new Uint32Array(2);if(window.crypto?.getRandomValues)crypto.getRandomValues(values);else{values[0]=Date.now();values[1]=Math.random()*4294967296;}return Array.from(values,n=>n.toString(36)).join('-');};
   const day=()=>{const date=new Date();return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;};
   try{
@@ -52,7 +54,8 @@
   }
   function renderRelics(){
     $('relic-count').textContent=`${run().relics.length} / 4`;
-    $('relics').innerHTML=Array.from({length:4},(_,i)=>{const relic=E.RELICS.find(r=>r.id===run().relics[i]);return relic?`<button class="relic-slot" data-relic="${relic.id}" type="button" aria-label="${relic.name}: ${relic.text}${run().phase==='shop'?', 눌러 팔기':''}">${A.icon(relic.icon)}<span>${relic.name}</span></button>`:'<div class="relic-slot empty">유물 자리</div>';}).join('');
+    $('sell-menu').hidden=run().phase!=='shop'||busy||!run().relics.length;
+    $('relics').innerHTML=Array.from({length:4},(_,i)=>{const relic=E.RELICS.find(r=>r.id===run().relics[i]);return relic?`<button class="relic-slot" data-relic="${relic.id}" type="button" aria-label="${relic.name}: ${relic.text}">${A.icon(relic.icon)}<span>${relic.name}</span></button>`:'<div class="relic-slot empty">유물 자리</div>';}).join('');
   }
   function renderRoundScore(score){
     const pct=Math.min(100,Math.floor(score/E.TARGETS[run().round]*100));
@@ -105,6 +108,7 @@
     $('retry').textContent=r.mode==='daily'?'같은 오늘의 바다에 다시 도전':'새로운 덱으로 다시 항해';
   }
   function render(){
+    hidePressTip();
     const phase=run().phase;$('play-zone').hidden=phase!=='play'&&!busy;$('shop-zone').hidden=phase!=='shop'||busy;$('result-zone').hidden=!['won','lost'].includes(phase)||busy;
     renderStats();renderRelics();renderTable();renderHand();
     if(phase==='shop'&&!busy)renderShop();if(['won','lost'].includes(phase)&&!busy)renderResult();
@@ -243,8 +247,127 @@
   $('shop-offers').addEventListener('click',event=>{const button=event.target.closest('[data-buy]');if(button){const next=E.buy(run(),Number(button.dataset.buy));if(commit(next))message('새로운 조합이 준비됐어요. 다음 수심에서 사용해 보세요.');}});
   $('reroll').addEventListener('click',()=>{if(commit(E.reroll(run())))message('정박지에 새 상품이 도착했어요.');});
   $('continue').addEventListener('click',()=>{if(commit(E.advance(run())))message('패와 덱을 새로 섞었어요. 유물과 족보 레벨은 그대로예요.');});
-  $('relics').addEventListener('click',event=>{const button=event.target.closest('[data-relic]');if(!button||busy)return;detailRelic=button.dataset.relic;const relic=E.RELICS.find(r=>r.id===detailRelic);$('detail-kicker').textContent='RELIC COLLECTION';$('detail-title').textContent=relic.name;$('detail-content').innerHTML=A.icon(relic.icon)+`<p>${relic.text}</p><p class="help-foot">카드를 낸 뒤 계산 과정에서 발동한 유물을 확인할 수 있어요.</p>`;$('sell-relic').hidden=run().phase!=='shop';$('sell-relic').textContent=`${Math.floor(relic.price/2)} 진주에 팔기`;$('detail-dialog').showModal();});
-  $('sell-relic').addEventListener('click',()=>{if(commit(E.sell(run(),detailRelic))){$('detail-dialog').close();message('유물을 팔아 자리를 비웠어요.');}});
+  function relicById(id){return E.RELICS.find(relic=>relic.id===id);}
+  function relicSellPrice(relic){return Math.floor(relic.price/2);}
+  function showRelicDetails(relic){
+    detailRelic=relic.id;
+    $('detail-kicker').textContent='RELIC COLLECTION';
+    $('detail-title').textContent=relic.name;
+    $('detail-content').innerHTML=A.icon(relic.icon)+`<p>${relic.text}</p>`;
+    $('sell-relic').hidden=run().phase!=='shop';
+    $('sell-relic').textContent=`${relicSellPrice(relic)} 진주에 팔기`;
+    if(!$('detail-dialog').open)$('detail-dialog').showModal();
+    else $('sell-relic').focus();
+  }
+  function deckInfo(){
+    const {deck,hand,spent}=run();
+    const counts=Array(E.SUITS.length).fill(0);
+    for(const id of deck)counts[E.card(id).suit]++;
+    return {counts,summary:`남은 덱 ${deck.length}장 · 손패 ${hand.length}장 · 이미 사용한 카드 ${spent.length}장`};
+  }
+  function showDeckDetails(){
+    const {counts,summary}=deckInfo();
+    $('detail-kicker').textContent='BELOW THE SURFACE';
+    $('detail-title').textContent='아직 만나지 않은 카드';
+    $('detail-content').innerHTML=`<p>${summary}</p><div class="deck-grid">${E.SUITS.map((s,i)=>`<div>${s.symbol} ${s.name}<br><strong>${counts[i]}장</strong></div>`).join('')}</div><p class="help-foot">새 라운드가 시작되면 52장을 모두 다시 섞어요.</p>`;
+    $('sell-relic').hidden=true;
+    $('detail-dialog').showModal();
+  }
+  function hidePressTip(){
+    if(!activePress)return;
+    activePress.control.classList.remove('detail-held');
+    lastTouch={control:activePress.control,ended:Date.now()};
+    activePress=null;
+    $('press-tip').hidden=true;
+  }
+  function positionPressTip(tip,control,x,y){
+    const viewport=window.visualViewport;
+    const left=(viewport?.offsetLeft||0)+10, top=(viewport?.offsetTop||0)+10;
+    const right=left+(viewport?.width||window.innerWidth)-20;
+    const bottom=top+(viewport?.height||window.innerHeight)-20;
+    const anchor=control.getBoundingClientRect();
+    const gap=24;
+    const above=Math.min(anchor.top,y)-gap;
+    const below=Math.max(anchor.bottom,y)+gap;
+    tip.style.maxWidth=`${Math.max(0,right-left)}px`;
+    tip.style.maxHeight='none';
+    const {width,height}=tip.getBoundingClientRect();
+    const useAbove=above-top>=height||above-top>=bottom-below;
+    const room=Math.max(0,useAbove?above-top:bottom-below);
+    if(!room)return false;
+    const boxLeft=Math.min(Math.max(x-width/2,left),right-width);
+    tip.style.left=`${boxLeft}px`;
+    tip.style.top=`${useAbove?above-Math.min(height,room):below}px`;
+    tip.style.maxHeight=`${room}px`;
+    return true;
+  }
+  function showPressTip(event){
+    hidePressTip();
+    if(event.pointerType!=='touch'){lastTouch=null;return;}
+    if(!event.isPrimary||busy)return;
+    const control=event.target.closest(pressControls);
+    if(!control||control.disabled)return;
+    const relic=relicById(control.dataset.relic);
+    const deck=relic?null:deckInfo();
+    $('press-tip-title').textContent=relic?.name||'남은 덱';
+    $('press-tip-text').textContent=relic?.text||deck.summary;
+    $('press-tip-suits').hidden=!deck;
+    $('press-tip-suits').textContent=deck?E.SUITS.map((s,i)=>`${s.symbol} ${deck.counts[i]}장`).join(' · '):'';
+    const tip=$('press-tip');
+    activePress={control,id:event.pointerId,x:event.clientX,y:event.clientY};
+    control.classList.add('detail-held');
+    tip.hidden=false;
+    if(!positionPressTip(tip,control,event.clientX,event.clientY))hidePressTip();
+  }
+  function isTouchClick(event,control){
+    if(event.pointerType==='touch'||event.sourceCapabilities?.firesTouchEvents)return true;
+    return event.detail>0&&lastTouch?.control===control&&Date.now()-lastTouch.ended<750;
+  }
+  document.addEventListener('pointerdown',showPressTip,{passive:true});
+  document.addEventListener('pointermove',event=>{
+    if(event.pointerId===activePress?.id&&Math.hypot(event.clientX-activePress.x,event.clientY-activePress.y)>12)hidePressTip();
+  },{passive:true});
+  for(const type of ['pointerup','pointercancel','lostpointercapture']){
+    document.addEventListener(type,event=>{if(event.pointerId===activePress?.id)hidePressTip();},true);
+  }
+  for(const type of ['resize','blur','pagehide'])window.addEventListener(type,hidePressTip);
+  window.visualViewport?.addEventListener('resize',hidePressTip);
+  window.visualViewport?.addEventListener('scroll',hidePressTip);
+  document.addEventListener('scroll',hidePressTip,{capture:true,passive:true});
+  document.addEventListener('contextmenu',event=>{
+    const control=event.target.closest(pressControls);
+    if(control&&(activePress?.control===control||isTouchClick(event,control)))event.preventDefault();
+  });
+  $('relics').addEventListener('click',event=>{
+    const button=event.target.closest('[data-relic]');
+    if(button&&!busy&&!isTouchClick(event,button))showRelicDetails(relicById(button.dataset.relic));
+  });
+  $('deck').addEventListener('click',event=>{
+    if(!busy&&!isTouchClick(event,$('deck')))showDeckDetails();
+  });
+  $('sell-menu').addEventListener('click',()=>{
+    if(run().phase!=='shop'||busy)return;
+    $('detail-kicker').textContent='정박지';
+    $('detail-title').textContent='팔 유물 고르기';
+    $('detail-content').innerHTML=`<div class="relic-sale-list">${run().relics.map(id=>{
+      const relic=relicById(id);
+      return `<button type="button" class="discard-button" data-sale-relic="${id}"><span>${relic.name}</span><span>${relicSellPrice(relic)} 진주</span></button>`;
+    }).join('')}</div>`;
+    $('sell-relic').hidden=true;
+    $('detail-dialog').showModal();
+  });
+  $('detail-content').addEventListener('click',event=>{
+    const button=event.target.closest('[data-sale-relic]');
+    if(button&&run().phase==='shop')showRelicDetails(relicById(button.dataset.saleRelic));
+  });
+  $('sell-relic').addEventListener('click',()=>{
+    if(commit(E.sell(run(),detailRelic))){
+      $('detail-dialog').close();
+      const nextControl=$('sell-menu').hidden?$('continue'):$('sell-menu');
+      nextControl.focus({preventScroll:true});
+      message('유물을 팔아 자리를 비웠어요.');
+    }
+  });
   $('last-calculation').addEventListener('click',()=>{
     const last=run().last;
     if(!last||busy)return;
@@ -265,9 +388,6 @@
     $('sell-relic').hidden=true;
     $('detail-dialog').showModal();
   });
-  $('deck').addEventListener('click',()=>{
-    const counts=E.SUITS.map((s,i)=>run().deck.filter(id=>E.card(id).suit===i).length);$('detail-kicker').textContent='BELOW THE SURFACE';$('detail-title').textContent='아직 만나지 않은 카드';$('detail-content').innerHTML=`<p>남은 덱 ${run().deck.length}장 · 손패 ${run().hand.length}장 · 이미 사용한 카드 ${run().spent.length}장</p><div class="deck-grid">${E.SUITS.map((s,i)=>`<div>${s.symbol} ${s.name}<br><strong>${counts[i]}장</strong></div>`).join('')}</div><p class="help-foot">여기에는 남은 카드 수만 보여요. 다음 카드의 순서는 알 수 없어요. 새 라운드가 시작되면 52장을 모두 다시 섞어요.</p>`;$('sell-relic').hidden=true;$('detail-dialog').showModal();
-  });
   $('help').addEventListener('click',showHelp);$('result-help').addEventListener('click',showHelp);
   $('new-voyage').addEventListener('click',()=>{$('daily-label').textContent=`${day()} · 같은 덱, 같은 출발.`;$('new-warning').textContent=['won','lost'].includes(run().phase)?'새로운 항해를 시작해 보세요. 최고 기록은 남아요.':'새로 시작하면 현재 항해는 끝나요. 최고 기록은 남아요.';$('voyage-dialog').showModal();});
   $('start-free').addEventListener('click',()=>start('free'));$('start-daily').addEventListener('click',()=>start('daily'));$('retry').addEventListener('click',()=>start(run().mode));
@@ -275,6 +395,6 @@
   document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>button.closest('dialog').close()));
   document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog){const rect=dialog.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)dialog.close();}}));
   window.addEventListener('pagehide',()=>{if(calculation)finishScoring({focus:false});});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(calculation)finishScoring({focus:false});save();}});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){hidePressTip();if(calculation)finishScoring({focus:false});save();}});
   $('table-emblem').innerHTML=A.icon('compass');save();render();
 })();

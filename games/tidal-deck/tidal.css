@@ -222,3 +222,32 @@ dialog>p,.help-steps p{font-size:16px}.guide-row{font-size:14px}.guide-row b{fon
   .score-panel.is-scoring { min-height: 50px; }
   .notice { margin-top: 3px; }
 }
+
+#deck, #relics [data-relic] {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+.detail-held { outline: 1px solid var(--gold); outline-offset: 2px; }
+.press-tip {
+  position: fixed;
+  z-index: 12;
+  width: max-content;
+  max-width: min(265px, calc(100vw - 20px));
+  pointer-events: none;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  padding: 8px 12px;
+  border: 1px solid #6e9a92;
+  border-radius: 10px;
+  background: #102e39;
+  box-shadow: 0 7px 22px #041820c9;
+  color: var(--paper);
+  font-size: .875rem;
+  line-height: 1.4;
+}
+.press-tip strong { display: block; margin-bottom: 4px; color: var(--gold); }
+.press-tip-suits { margin-top: 4px; color: var(--mint); font-variant-numeric: tabular-nums; }
+#sell-menu { padding: 4px 8px; border: 1px solid var(--line); border-radius: 5px; font-size: .75rem; }
+.relic-sale-list { display: grid; gap: 6px; }
+.relic-sale-list button { display: flex; justify-content: space-between; gap: 12px; text-align: left; }
+.relic-sale-list button span:last-child { flex-shrink: 0; color: var(--gold); }
