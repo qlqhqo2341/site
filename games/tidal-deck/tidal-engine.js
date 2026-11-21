@@ -56,14 +56,46 @@
     return {type,scoring};
   }
   function selection(run,ids){return run?.phase==='play'&&Array.isArray(ids)&&ids.length>=1&&ids.length<=5&&new Set(ids).size===ids.length&&ids.every(id=>run.hand.includes(id));}
-  function quote(run,ids){
+  function quote(run,ids,{withSteps=false}={}){
     if(!selection(run,ids))return null;
     const hand=evaluate(ids),base=HANDS[hand.type],level=run.levels[hand.type];
-    const scoring=run.relics.includes('foam')?[...ids]:hand.scoring;
-    const pressure=run.round===8?.5:1,cardChips=scoring.reduce((sum,id)=>sum+points(id),0)*pressure;
-    let chips=base.chips+base.growth*level+cardChips,mult=base.mult+level,factor=1,bonusCoins=0;
-    const effects=[{name:base.name,detail:`Lv.${level+1} · ${base.chips+base.growth*level} 칩 × ${base.mult+level} 배수`},{name:'카드 칩',detail:`+${cardChips}${pressure<1?' · 수압으로 절반':''}`}];
-    function bonus(id,c,m,x=1){if(!c&&!m&&x===1)return;const relic=RELICS.find(r=>r.id===id);chips+=c;mult+=m;factor*=x;effects.push({name:relic.name,detail:[c?`칩 +${c}`:'',m?`배수 +${m}`:'',x!==1?`최종 배수 ×${x}`:''].filter(Boolean).join(' · ')});}
+    const foam=run.relics.includes('foam');
+    const scoring=foam?[...ids]:hand.scoring;
+    const pressure=run.round===8?.5:1;
+    let chips=base.chips+base.growth*level,mult=base.mult+level,bonusCoins=0;
+    const steps=withSteps?[]:null;
+    const effects=[],multipliers=[];
+    function step(kind,name,detail,source={}){
+      if(steps)steps.push({kind,name,detail,chips,mult,...source});
+    }
+    const baseDetail=`Lv.${level+1} · ${chips} 칩 × ${mult} 배수`;
+    effects.push({name:base.name,detail:baseDetail});
+    step('base',base.name,baseDetail);
+    if(foam){
+      const detail='선택한 카드 전부 계산';
+      effects.push({name:'물거품 렌즈',detail});
+      step('info','물거품 렌즈',detail,{relicId:'foam'});
+    }
+    let cardChips=0;
+    for(const id of ids){
+      if(!scoring.includes(id))continue;
+      const value=points(id)*pressure;
+      cardChips+=value;
+      chips+=value;
+      step('chips',`${rankName(id)}${SUITS[card(id).suit].symbol}`,`칩 +${value}${pressure<1?' · 수압 적용':''}`,{cardId:id});
+    }
+    effects.push({name:'카드 칩',detail:`+${cardChips}${pressure<1?' · 수압으로 절반':''}`});
+    function bonus(id,c,m,x=1){
+      if(!c&&!m&&x===1)return;
+      const {name}=RELICS.find(relic=>relic.id===id);
+      if(x!==1)multipliers.push({id,name,factor:x});
+      if(!c&&!m)return;
+      chips+=c;
+      mult+=m;
+      const detail=[c?`칩 +${c}`:'',m?`배수 +${m}`:''].filter(Boolean).join(' · ');
+      effects.push({name,detail});
+      step(m?'mult':'chips',name,detail,{relicId:id});
+    }
     for(const id of run.relics){
       if(id==='coral')bonus(id,0,2);
       if(id==='pearl')bonus(id,45,0);
@@ -78,13 +110,27 @@
       if(id==='shell')bonus(id,0,2*run.discards);
       if(id==='anchor')bonus(id,25*Math.max(0,run.hands-1),0);
       if(id==='moon'&&scoring.some(c=>card(c).suit===1)&&scoring.some(c=>card(c).suit===3))bonus(id,0,0,1.7);
-      if(id==='foam')effects.push({name:'물거품 렌즈',detail:'선택한 카드 전부 계산'});
-      if(id==='treasure'){bonusCoins+=2;effects.push({name:'표류한 보물',detail:'진주 +2'});}
+      if(id==='treasure'){
+        bonusCoins+=2;
+        effects.push({name:'표류한 보물',detail:'진주 +2'});
+        step('info','표류한 보물','진주 +2',{relicId:id});
+      }
     }
-    if(run.round===2){mult-=2;effects.push({name:'탁류',detail:'총 배수 −2 · 최소 1'});}
-    mult=Math.round(Math.max(1,mult)*factor*1000)/1000;
-    return {type:hand.type,scoring,chips,mult,score:Math.floor(chips*mult+1e-7),effects,bonusCoins};
+    if(run.round===2){
+      mult=Math.max(1,mult-2);
+      const detail='배수 −2 · 최소 1';
+      effects.push({name:'탁류',detail});
+      step('mult','탁류',detail);
+    }
+    for(const {id,name,factor} of multipliers){
+      mult=Math.round(mult*factor*1000)/1000;
+      const detail=`배수 ×${factor}`;
+      effects.push({name,detail});
+      step('mult',name,detail,{relicId:id});
+    }
+    return {type:hand.type,scoring,chips,mult,score:Math.floor(chips*mult+1e-7),effects,bonusCoins,...(steps?{steps}:{})};
   }
+
   function offers(run){
     const available=RELICS.filter(r=>!run.relics.includes(r.id));
     return [...shuffled(run,available).slice(0,2).map(r=>({kind:'relic',id:r.id,cost:r.price,sold:false})),...shuffled(run,HANDS.map((_,i)=>i).filter(i=>run.levels[i]<10)).slice(0,2).map(i=>({kind:'level',id:i,cost:3+Math.floor(run.levels[i]/2),sold:false}))];

@@ -33,7 +33,18 @@
         <div id="relics" class="relic-rack" aria-label="보유 유물"></div>
         <section id="play-zone">
           <div class="felt-table"><div class="table-orbit" aria-hidden="true"></div><div id="table-emblem" class="table-emblem" aria-hidden="true"></div><div class="table-caption"><span id="table-label">산호 정원의 첫 수</span><button id="deck" class="deck-counter" type="button" aria-label="남은 덱 확인"><span class="deck-back" aria-hidden="true">✧</span><span>덱 <b id="deck-count">44</b></span></button></div><div class="table-center"><div id="played-cards" class="played-cards" aria-label="직전에 낸 카드"></div><p id="table-message">서두르지 말고, 좋은 패를 골라요.</p><div id="last-score" class="last-score"></div></div><span class="table-footer">A LITTLE LUCK. A DEEPER DIVE.</span></div>
-          <div class="prediction"><div class="hand-type"><span id="selection-label">1–5장을 골라 주세요</span><strong id="hand-name">어떤 패가 보이나요?</strong></div><div class="equation" aria-label="예상 점수"><span class="chip-number"><small>칩</small><b id="chip-value">0</b></span><span class="math-symbol">×</span><span class="mult-number"><small>배수</small><b id="mult-value">0</b></span><span class="math-symbol">=</span><span class="total-number"><small>예상 점수</small><b id="preview-score">0</b></span></div></div>
+          <div class="prediction" id="score-panel">
+            <div class="hand-type"><span id="selection-label">1–5장을 골라 주세요</span><strong id="hand-name">어떤 패가 보이나요?</strong></div>
+            <div class="equation" id="score-equation" aria-label="예상 점수">
+              <span class="chip-number"><small>칩</small><b id="chip-value">0</b></span><span class="math-symbol">×</span>
+              <span class="mult-number"><small>배수</small><b id="mult-value">0</b></span><span class="math-symbol">=</span>
+              <span class="total-number"><small id="score-label">예상 점수</small><b id="preview-score">0</b></span>
+            </div>
+            <div class="score-step" id="score-step" hidden>
+              <span id="step-detail"></span>
+              <button id="skip-scoring" class="quiet-button" type="button">결과 보기</button>
+            </div>
+          </div>
           <div class="hand-toolbar"><span>나의 패 <b id="hand-count">8</b><small>점이 있는 카드는 점수에 쓰여요</small></span><div class="sort-controls" role="group" aria-label="패 정렬"><button id="sort-rank" type="button" aria-pressed="true">숫자</button><button id="sort-suit" type="button" aria-pressed="false">무늬</button></div></div>
           <div id="hand" class="card-hand" role="group" aria-label="손패에서 카드를 최대 다섯 장 선택"></div>
           <div class="play-controls"><button id="discard" class="discard-button" type="button" disabled>선택 카드 버리기</button><button id="clear-selection" class="quiet-button clear-selection" type="button" disabled>선택 해제</button><button id="play" class="play-button" type="button" disabled>카드 내기 <span id="play-count">0 / 5</span></button></div>

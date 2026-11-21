@@ -1,10 +1,10 @@
 (function(){
   'use strict';
-  const E=window.TidalEngine,A=window.TidalArt,$=id=>document.getElementById(id),KEY='little-arcade:tidal:v1',reduced=matchMedia('(prefers-reduced-motion: reduce)');
+  const E=window.TidalEngine,A=window.TidalArt,$=id=>document.getElementById(id),KEY='little-arcade:tidal:v1';
   const number=value=>Number(value).toLocaleString('ko-KR',{maximumFractionDigits:3});
   const descriptions=['가장 높은 카드 한 장','같은 숫자 2장','같은 숫자 2장씩 두 쌍','같은 숫자 3장','연속된 숫자 5장','같은 무늬 5장','트리플 + 원 페어','같은 숫자 4장','같은 무늬의 연속 숫자 5장'];
   const depthNames=['산호 정원','푸른 침묵','별 없는 바다'];
-  let data={version:1,run:null,records:{best:0,wins:0,runs:0},sound:false},selected=new Set(),sort='rank',busy=false,audio,timer,detailRelic=null;
+  let data={version:1,run:null,records:{best:0,wins:0,runs:0},sound:false},selected=new Set(),sort='rank',busy=false,audio,timer,calculation=null,detailRelic=null;
   const randomSeed=()=>{const values=new Uint32Array(2);if(window.crypto?.getRandomValues)crypto.getRandomValues(values);else{values[0]=Date.now();values[1]=Math.random()*4294967296;}return Array.from(values,n=>n.toString(36)).join('-');};
   const day=()=>{const date=new Date();return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;};
   try{
@@ -30,7 +30,7 @@
   function message(text){$('notice').textContent=text;}
   function cardHTML(id,mini=false){
     const c=E.card(id),s=E.SUITS[c.suit],rank=E.rankName(id),name=`${s.name} ${rank==='A'?'에이스':rank}`;
-    return `<${mini?'span':'button'} class="playing-card ${s.red?'red':''} ${E.face(id)?'court':''}" ${mini?'aria-label="'+name+'"':`type="button" data-card="${id}" aria-label="${name}, ${E.points(id)}칩" aria-pressed="false"`}><span class="card-corner">${rank}<small>${s.symbol}</small></span><span class="card-pip" aria-hidden="true">${s.symbol}</span><span class="card-corner card-bottom" aria-hidden="true">${rank}<small>${s.symbol}</small></span>${mini?'':'<i class="score-dot" aria-hidden="true"></i>'}</${mini?'span':'button'}>`;
+    return `<${mini?'span':'button'} class="playing-card ${s.red?'red':''} ${E.face(id)?'court':''}" ${mini?`aria-label="${name}" data-played="${id}"`:`type="button" data-card="${id}" aria-label="${name}, ${E.points(id)}칩" aria-pressed="false"`}><span class="card-corner">${rank}<small>${s.symbol}</small></span><span class="card-pip" aria-hidden="true">${s.symbol}</span><span class="card-corner card-bottom" aria-hidden="true">${rank}<small>${s.symbol}</small></span>${mini?'':'<i class="score-dot" aria-hidden="true"></i>'}</${mini?'span':'button'}>`;
   }
   function refreshPreview(){
     const q=E.quote(run(),[...selected]),scoring=new Set(q?.scoring||[]);
@@ -39,7 +39,21 @@
     $('hand-name').textContent=q?E.HANDS[q.type].name:'어떤 패가 보이나요?';
     $('chip-value').textContent=number(q?.chips||0);$('mult-value').textContent=number(q?.mult||0);$('preview-score').textContent=number(q?.score||0);
     $('play-count').textContent=`${selected.size} / 5`;$('play').disabled=busy||!q;$('discard').disabled=busy||!selected.size||!run().discards||run().phase!=='play';$('clear-selection').disabled=busy||!selected.size;
-    $('breakdown').innerHTML=q?q.effects.map(effect=>`<div><span>${effect.name}</span><span>${effect.detail}</span></div>`).join(''):'카드를 고르면 족보와 유물 효과를 미리 볼 수 있어요.';
+    const effects=q?.effects||run().last?.effects;
+    $('breakdown').replaceChildren();
+    if(!effects){
+      $('breakdown').textContent='카드를 고르면 족보와 유물 효과를 미리 볼 수 있어요.';
+      return;
+    }
+    for(const {name,detail} of effects){
+      const row=document.createElement('div');
+      const label=document.createElement('span');
+      const value=document.createElement('span');
+      label.textContent=name;
+      value.textContent=detail;
+      row.append(label,value);
+      $('breakdown').append(row);
+    }
   }
   function renderHand(){
     const cards=[...run().hand].sort((a,b)=>sort==='suit'?E.card(a).suit-E.card(b).suit||E.card(b).rank-E.card(a).rank:E.card(b).rank-E.card(a).rank||E.card(a).suit-E.card(b).suit);
@@ -50,10 +64,17 @@
     $('relic-count').textContent=`${run().relics.length} / 4`;
     $('relics').innerHTML=Array.from({length:4},(_,i)=>{const relic=E.RELICS.find(r=>r.id===run().relics[i]);return relic?`<button class="relic-slot" data-relic="${relic.id}" type="button" aria-label="${relic.name}: ${relic.text}${run().phase==='shop'?', 눌러 팔기':''}">${A.icon(relic.icon)}<span>${relic.name}</span></button>`:'<div class="relic-slot empty">유물 자리</div>';}).join('');
   }
+  function renderRoundScore(score){
+    const pct=Math.min(100,Math.floor(score/E.TARGETS[run().round]*100));
+    $('round-score').textContent=number(score);
+    $('progress').setAttribute('aria-valuenow',pct);
+    $('progress').querySelector('i').style.width=`${pct}%`;
+  }
   function renderStats(){
-    const r=run(),depth=Math.floor(r.round/3),pct=Math.min(100,Math.floor(r.score/E.TARGETS[r.round]*100));
+    const r=run(),depth=Math.floor(r.round/3);
     $('depth-name').textContent=depthNames[depth];$('depth-label').textContent=`수심 ${(r.round+1)*100} m`;$('round-label').textContent=`${r.round+1} / 9`;
-    $('target').textContent=number(E.TARGETS[r.round]);$('round-score').textContent=number(r.score);$('progress').setAttribute('aria-valuenow',pct);$('progress').querySelector('i').style.width=`${pct}%`;
+    $('target').textContent=number(E.TARGETS[r.round]);
+    renderRoundScore(calculation?.banked===false?calculation.previousScore:r.score);
     $('hands').textContent=r.hands;$('discards').textContent=r.discards;$('coins').textContent=r.coins;$('record').textContent=data.records.best?number(data.records.best):'—';
     $('route').innerHTML=E.TARGETS.map((target,i)=>`<i class="${i<r.round?'done':i===r.round?'current':''} ${(i+1)%3===0?'boss':''}" aria-label="${i+1}라운드${i===r.round?', 현재':''}${i<r.round?', 완료':''}"></i>`).join('');
     const condition=E.condition(r.round);$('condition').classList.toggle('boss-condition',Boolean(condition));$('condition').innerHTML=condition?`<b>특별 조건 · ${condition.name}</b>${condition.text}`:`<b>${(r.round+1)%3===2?'다음은 특별 라운드':'작은 항해 노트'}</b>${(r.round+1)%3===2?'유물을 챙기고, 한 수 앞을 준비해요.':'남은 핸드와 모아 둔 진주는 클리어 보상이 돼요.'}`;
@@ -64,8 +85,8 @@
     const r=run(),last=r.last;
     $('table-label').textContent=`${depthNames[Math.floor(r.round/3)]} · ${r.round+1}번째 잠수`;
     $('deck-count').textContent=r.deck.length;$('played-cards').innerHTML=last?.cards?.length?last.cards.map(id=>cardHTML(id,true)).join(''):'';
-    $('table-message').textContent=last?`${E.HANDS[last.type].name} · ${number(last.chips)} 칩 × ${number(last.mult)} 배수`:'서두르지 말고, 좋은 패를 골라요.';
-    $('last-score').textContent=last?`+${number(last.score)}`:'';
+    $('table-message').textContent=calculation?E.HANDS[last.type].name:last?`${E.HANDS[last.type].name} · ${number(last.chips)} 칩 × ${number(last.mult)} 배수`:'서두르지 말고, 좋은 패를 골라요.';
+    $('last-score').textContent=last&&!calculation?`+${number(last.score)}`:'';
   }
   function renderShop(){
     const r=run(),reward=r.reward;
@@ -95,19 +116,110 @@
   }
   function focusPhase(){
     const id=run().phase==='shop'?'shop-title':['won','lost'].includes(run().phase)?'result-title':null;
-    if(id){$(id).tabIndex=-1;$(id).focus({preventScroll:true});}
+    if(id){$(id).tabIndex=-1;$(id).focus();}
   }
-  function commit(next,animate=false){
+  function commit(next){
     if(!next||busy)return false;
-    const before=run().phase;data.run=next;selected.clear();data.records.best=Math.max(data.records.best,next.stats.best);
-    if(before==='play'&&['won','lost'].includes(next.phase)){data.records.runs++;if(next.phase==='won')data.records.wins++;}
-    save();busy=animate&&!reduced.matches;render();
-    if(busy){document.body.classList.add('scoring-flash');timer=setTimeout(()=>{busy=false;document.body.classList.remove('scoring-flash');render();focusPhase();},650);}
-    else if(next.phase!==before)focusPhase();
-    sound(next.phase==='shop'||next.phase==='won');return true;
+    const before=run().phase;
+    data.run=next;
+    selected.clear();
+    data.records.best=Math.max(data.records.best,next.stats.best);
+    if(before==='play'&&['won','lost'].includes(next.phase)){
+      data.records.runs++;
+      if(next.phase==='won')data.records.wins++;
+    }
+    save();
+    busy=Boolean(calculation);
+    render();
+    if(!calculation){
+      if(next.phase!==before)focusPhase();
+      sound();
+    }
+    return true;
+  }
+  function highlightScoreSource(step){
+    document.querySelectorAll('.score-source').forEach(element=>element.classList.remove('score-source'));
+    if(step.cardId!==undefined){
+      const card=$('played-cards').querySelector(`[data-played="${step.cardId}"]`);
+      if(card){card.dataset.gain=step.detail.split(' · ')[0];card.classList.add('score-source','counted');}
+    }
+    if(step.relicId)$('relics').querySelector(`[data-relic="${step.relicId}"]`)?.classList.add('score-source');
+  }
+  function showScoreStep(index){
+    const {steps,previousScore,restoreFocus}=calculation;
+    const {last,score}=run();
+    const step=steps[index];
+    highlightScoreSource(step||{});
+    $('chip-value').textContent=number(step?.chips??last.chips);
+    $('mult-value').textContent=number(step?.mult??last.mult);
+    const panel=$('score-panel');
+    delete panel.dataset.tone;
+    void panel.offsetWidth;
+    if(step){
+      panel.dataset.tone=step.kind;
+      $('hand-name').textContent=step.name;
+      $('step-detail').textContent=step.detail;
+      timer=setTimeout(()=>showScoreStep(index+1),step.kind==='chips'&&step.cardId!==undefined?250:380);
+      return;
+    }
+    $('hand-name').textContent=E.HANDS[last.type].name;
+    $('preview-score').textContent=number(last.score);
+    $('last-score').textContent=`+${number(last.score)}`;
+    if(index===steps.length){
+      panel.dataset.tone='total';
+      $('step-detail').textContent=`${number(last.chips)} × ${number(last.mult)} = ${number(last.score)}`;
+      sound(run().phase==='shop'||run().phase==='won');
+      timer=setTimeout(()=>showScoreStep(index+1),540);
+      return;
+    }
+    calculation.banked=true;
+    panel.dataset.tone='bank';
+    $('step-detail').textContent=`라운드 점수 ${number(previousScore)} + ${number(last.score)} = ${number(score)}`;
+    renderRoundScore(score);
+    timer=setTimeout(()=>finishScoring({restoreFocus}),620);
+  }
+  function finishScoring({restoreFocus=false,focus=true}={}){
+    if(!calculation)return;
+    clearTimeout(timer);
+    const focusCard=restoreFocus||document.activeElement===$('skip-scoring');
+    calculation=null;
+    busy=false;
+    $('score-panel').classList.remove('is-scoring');
+    delete $('score-panel').dataset.tone;
+    $('score-step').hidden=true;
+    $('score-label').textContent='예상 점수';
+    $('score-equation').setAttribute('aria-label','예상 점수');
+    render();
+    if(focus){
+      focusPhase();
+      if(focusCard&&run().phase==='play')$('hand').querySelector('[data-card]')?.focus({preventScroll:true});
+    }
+    const {phase,last,reward}=run();
+    const gained=`${E.HANDS[last.type].name} ${number(last.score)}점`;
+    if(phase==='shop')message(`${gained}. 목표 달성! 진주 ${reward.total}개를 받았어요.`);
+    else if(phase==='won')message(`${gained}. 9라운드를 모두 통과했어요!`);
+    else message(`${gained}을 모았어요.${last.bonusCoins?' 진주 +'+last.bonusCoins:''}`);
+  }
+  function playSelected(){
+    if(busy)return;
+    const ids=[...selected];
+    const quote=E.quote(run(),ids,{withSteps:true});
+    if(!quote)return;
+    const next=E.play(run(),ids);
+    calculation={steps:quote.steps,previousScore:run().score,banked:false,restoreFocus:document.activeElement===$('play')&&$('play').matches(':focus-visible')};
+    commit(next);
+    message('');
+    $('score-panel').classList.add('is-scoring');
+    $('score-step').hidden=false;
+    $('selection-label').textContent='점수 계산';
+    $('score-label').textContent='이번 점수';
+    $('score-equation').setAttribute('aria-label','이번 점수 계산');
+    $('preview-score').textContent='—';
+    showScoreStep(0);
   }
   function start(mode){
-    clearTimeout(timer);busy=false;selected.clear();document.body.classList.remove('scoring-flash');
+    if(busy)return;
+    selected.clear();
     data.run=E.create(mode==='daily'?'daily:'+day():randomSeed(),mode);save();$('voyage-dialog').close();render();message(mode==='daily'?`${day()}의 덱이에요. 같은 선택은 같은 결과로 이어져요.`:'새로운 바다가 열렸어요. 카드를 골라 보세요.');
   }
   function showHelp(){
@@ -120,7 +232,8 @@
     message('');refreshPreview();
   });
   $('clear-selection').addEventListener('click',()=>{selected.clear();refreshPreview();});
-  $('play').addEventListener('click',()=>{const q=E.quote(run(),[...selected]);if(!q||busy)return;const next=E.play(run(),[...selected]);if(commit(next,true))message(next.phase==='shop'?`목표 달성! 정박지에서 진주 ${next.reward.total}개를 받았어요.`:next.phase==='won'?'9라운드를 모두 통과했어요!':`${E.HANDS[q.type].name}, ${number(q.score)}점을 모았어요.${q.bonusCoins?' 진주 +'+q.bonusCoins:''}`);});
+  $('play').addEventListener('click',playSelected);
+  $('skip-scoring').addEventListener('click',()=>finishScoring());
   $('discard').addEventListener('click',()=>{const count=selected.size;if(commit(E.discard(run(),[...selected]))){message(`${count}장을 바꾸었어요. 핸드는 그대로예요.`);$('hand').classList.remove('dealing');void $('hand').offsetWidth;$('hand').classList.add('dealing');}});
   for(const type of ['rank','suit'])$('sort-'+type).addEventListener('click',()=>{sort=type;renderHand();});
   $('shop-offers').addEventListener('click',event=>{const button=event.target.closest('[data-buy]');if(button){const next=E.buy(run(),Number(button.dataset.buy));if(commit(next))message('새로운 조합이 준비됐어요. 다음 수심에서 사용해 보세요.');}});
@@ -137,6 +250,7 @@
   $('sound').addEventListener('click',()=>{data.sound=!data.sound;save();renderStats();sound();});
   document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>button.closest('dialog').close()));
   document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('click',event=>{if(event.target===dialog){const rect=dialog.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)dialog.close();}}));
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(busy){clearTimeout(timer);busy=false;document.body.classList.remove('scoring-flash');render();}save();}});
+  window.addEventListener('pagehide',()=>{if(calculation)finishScoring({focus:false});});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){if(calculation)finishScoring({focus:false});save();}});
   $('table-emblem').innerHTML=A.icon('compass');save();render();
 })();

@@ -96,3 +96,28 @@ test('malformed saves reject bad decks, stale scoring data, invalid shops and br
   const played=E.play(r,[r.hand[0]]),shop=shopFixture();
   for(const bad of [null,{}, {...r,rng:-1},{...r,round:9},{...r,hands:0},{...r,coins:-1},{...r,levels:[0]},{...r,relics:['unknown']},{...r,relics:['coral','coral']},{...r,hand:r.hand.map(()=>0)},{...r,deck:r.deck.slice(1)},{...r,stats:null},{...r,last:{}},{...played,last:{...played.last,type:99}},{...played,last:{...played.last,score:Infinity}},{...shop,reward:null},{...shop,shop:{...shop.shop,offers:[{kind:'bad',cost:0,sold:false}]}},{...shop,shop:{...shop.shop,offers:[{kind:'level',id:99,cost:0,sold:false}]}}])assert.equal(E.valid(bad),false);
 });
+
+test('scoring steps reveal only contributing cards and apply additions, the boss penalty, then multipliers',()=>{
+  const cards=[id(8,1),id(13,2),id(8,3),id(4),id(2)];
+  const run=withHand(cards);
+  run.round=2;
+  run.relics=['current','twins','echo','moon'];
+  run.played[1]=1;
+  const quote=E.quote(run,cards,{withSteps:true});
+  assert.deepEqual(quote.steps.map(({kind,cardId,relicId,chips,mult})=>[kind,cardId??relicId,chips,mult]),[
+    ['base',undefined,20,2],['chips',id(8,1),28,2],['chips',id(8,3),36,2],
+    ['mult','twins',36,7],['mult',undefined,36,5],['mult','current',36,8],
+    ['mult','echo',36,13.6],['mult','moon',36,23.12]
+  ]);
+  assert.equal(quote.score,832);
+  assert.equal(E.play(run,cards).last.score,quote.score);
+  assert.ok(!('steps' in E.play(run,cards).last));
+
+  run.round=8;
+  run.relics=['foam'];
+  const pressure=E.quote(run,cards,{withSteps:true});
+  assert.deepEqual(pressure.steps.filter(step=>step.cardId!==undefined).map(step=>step.chips),[24,29,33,35,36]);
+  assert.equal(pressure.steps[1].relicId,'foam');
+  assert.equal(pressure.steps.at(-1).chips,pressure.chips);
+  assert.ok(E.valid(E.play(run,cards)));
+});
