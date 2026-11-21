@@ -32,33 +32,23 @@
     const c=E.card(id),s=E.SUITS[c.suit],rank=E.rankName(id),name=`${s.name} ${rank==='A'?'에이스':rank}`;
     return `<${mini?'span':'button'} class="playing-card ${s.red?'red':''} ${E.face(id)?'court':''}" ${mini?`aria-label="${name}" data-played="${id}"`:`type="button" data-card="${id}" aria-label="${name}, ${E.points(id)}칩" aria-pressed="false"`}><span class="card-corner">${rank}<small>${s.symbol}</small></span><span class="card-pip" aria-hidden="true">${s.symbol}</span><span class="card-corner card-bottom" aria-hidden="true">${rank}<small>${s.symbol}</small></span>${mini?'':'<i class="score-dot" aria-hidden="true"></i>'}</${mini?'span':'button'}>`;
   }
-  function refreshPreview(){
-    const q=E.quote(run(),[...selected]),scoring=new Set(q?.scoring||[]);
-    for(const button of $('hand').querySelectorAll('[data-card]')){const id=Number(button.dataset.card);button.setAttribute('aria-pressed',String(selected.has(id)));button.classList.toggle('scoring',scoring.has(id));button.disabled=busy||run().phase!=='play';}
-    $('selection-label').textContent=selected.size?`${selected.size}장 선택 · Lv.${run().levels[q.type]+1}`:'1–5장을 골라 주세요';
-    $('hand-name').textContent=q?E.HANDS[q.type].name:'어떤 패가 보이나요?';
-    $('chip-value').textContent=number(q?.chips||0);$('mult-value').textContent=number(q?.mult||0);$('preview-score').textContent=number(q?.score||0);
-    $('play-count').textContent=`${selected.size} / 5`;$('play').disabled=busy||!q;$('discard').disabled=busy||!selected.size||!run().discards||run().phase!=='play';$('clear-selection').disabled=busy||!selected.size;
-    const effects=q?.effects||run().last?.effects;
-    $('breakdown').replaceChildren();
-    if(!effects){
-      $('breakdown').textContent='카드를 고르면 족보와 유물 효과를 미리 볼 수 있어요.';
-      return;
+  function refreshSelection(){
+    const hand=E.evaluate([...selected]);
+    for(const button of $('hand').querySelectorAll('[data-card]')){
+      button.setAttribute('aria-pressed',String(selected.has(Number(button.dataset.card))));
+      button.disabled=busy||run().phase!=='play';
     }
-    for(const {name,detail} of effects){
-      const row=document.createElement('div');
-      const label=document.createElement('span');
-      const value=document.createElement('span');
-      label.textContent=name;
-      value.textContent=detail;
-      row.append(label,value);
-      $('breakdown').append(row);
-    }
+    $('selection-label').textContent=hand?`${selected.size}장 선택 · Lv.${run().levels[hand.type]+1}`:'1–5장을 골라 주세요';
+    $('hand-name').textContent=hand?E.HANDS[hand.type].name:'선택한 족보 없음';
+    $('play-count').textContent=`${selected.size} / 5`;
+    $('play').disabled=busy||!hand;
+    $('discard').disabled=busy||!hand||!run().discards;
+    $('clear-selection').disabled=busy||!hand;
   }
   function renderHand(){
     const cards=[...run().hand].sort((a,b)=>sort==='suit'?E.card(a).suit-E.card(b).suit||E.card(b).rank-E.card(a).rank:E.card(b).rank-E.card(a).rank||E.card(a).suit-E.card(b).suit);
     $('hand').innerHTML=cards.map(id=>cardHTML(id)).join('');$('hand-count').textContent=cards.length;
-    $('sort-rank').setAttribute('aria-pressed',String(sort==='rank'));$('sort-suit').setAttribute('aria-pressed',String(sort==='suit'));refreshPreview();
+    $('sort-rank').setAttribute('aria-pressed',String(sort==='rank'));$('sort-suit').setAttribute('aria-pressed',String(sort==='suit'));refreshSelection();
   }
   function renderRelics(){
     $('relic-count').textContent=`${run().relics.length} / 4`;
@@ -75,7 +65,12 @@
     $('depth-name').textContent=depthNames[depth];$('depth-label').textContent=`수심 ${(r.round+1)*100} m`;$('round-label').textContent=`${r.round+1} / 9`;
     $('target').textContent=number(E.TARGETS[r.round]);
     renderRoundScore(calculation?.banked===false?calculation.previousScore:r.score);
-    $('hands').textContent=r.hands;$('discards').textContent=r.discards;$('coins').textContent=r.coins;$('record').textContent=data.records.best?number(data.records.best):'—';
+    const pending=calculation&&!calculation.banked;
+    $('hands').textContent=r.hands;
+    $('discards').textContent=r.discards;
+    $('coins').textContent=pending?calculation.previousCoins:r.coins;
+    const best=pending?calculation.previousBest:data.records.best;
+    $('record').textContent=best?number(best):'—';
     $('route').innerHTML=E.TARGETS.map((target,i)=>`<i class="${i<r.round?'done':i===r.round?'current':''} ${(i+1)%3===0?'boss':''}" aria-label="${i+1}라운드${i===r.round?', 현재':''}${i<r.round?', 완료':''}"></i>`).join('');
     const condition=E.condition(r.round);$('condition').classList.toggle('boss-condition',Boolean(condition));$('condition').innerHTML=condition?`<b>특별 조건 · ${condition.name}</b>${condition.text}`:`<b>${(r.round+1)%3===2?'다음은 특별 라운드':'작은 항해 노트'}</b>${(r.round+1)%3===2?'유물을 챙기고, 한 수 앞을 준비해요.':'남은 핸드와 모아 둔 진주는 클리어 보상이 돼요.'}`;
     $('mode-label').textContent=r.mode==='daily'?`오늘의 도전 · ${r.seed.replace('daily:','')}`:'자유 항해';
@@ -87,6 +82,7 @@
     $('deck-count').textContent=r.deck.length;$('played-cards').innerHTML=last?.cards?.length?last.cards.map(id=>cardHTML(id,true)).join(''):'';
     $('table-message').textContent=calculation?E.HANDS[last.type].name:last?`${E.HANDS[last.type].name} · ${number(last.chips)} 칩 × ${number(last.mult)} 배수`:'서두르지 말고, 좋은 패를 골라요.';
     $('last-score').textContent=last&&!calculation?`+${number(last.score)}`:'';
+    $('last-calculation').hidden=!last||busy;
   }
   function renderShop(){
     const r=run(),reward=r.reward;
@@ -112,7 +108,7 @@
     const phase=run().phase;$('play-zone').hidden=phase!=='play'&&!busy;$('shop-zone').hidden=phase!=='shop'||busy;$('result-zone').hidden=!['won','lost'].includes(phase)||busy;
     renderStats();renderRelics();renderTable();renderHand();
     if(phase==='shop'&&!busy)renderShop();if(['won','lost'].includes(phase)&&!busy)renderResult();
-    $('new-voyage').disabled=busy;$('sort-rank').disabled=busy;$('sort-suit').disabled=busy;
+    for(const id of ['new-voyage','sort-rank','sort-suit','deck','help'])$(id).disabled=busy;
   }
   function focusPhase(){
     const id=run().phase==='shop'?'shop-title':['won','lost'].includes(run().phase)?'result-title':null;
@@ -146,7 +142,7 @@
     if(step.relicId)$('relics').querySelector(`[data-relic="${step.relicId}"]`)?.classList.add('score-source');
   }
   function showScoreStep(index){
-    const {steps,previousScore,restoreFocus}=calculation;
+    const {steps,previousScore}=calculation;
     const {last,score}=run();
     const step=steps[index];
     highlightScoreSource(step||{});
@@ -163,32 +159,38 @@
       return;
     }
     $('hand-name').textContent=E.HANDS[last.type].name;
-    $('preview-score').textContent=number(last.score);
-    $('last-score').textContent=`+${number(last.score)}`;
     if(index===steps.length){
+      panel.dataset.tone='pending';
+      $('step-detail').textContent='칩 × 배수';
+      timer=setTimeout(()=>showScoreStep(index+1),460);
+      return;
+    }
+    if(index===steps.length+1){
+      $('hand-score').textContent=number(last.score);
+      $('last-score').textContent=`+${number(last.score)}`;
       panel.dataset.tone='total';
       $('step-detail').textContent=`${number(last.chips)} × ${number(last.mult)} = ${number(last.score)}`;
       sound(run().phase==='shop'||run().phase==='won');
-      timer=setTimeout(()=>showScoreStep(index+1),540);
+      timer=setTimeout(()=>showScoreStep(index+1),660);
       return;
     }
     calculation.banked=true;
     panel.dataset.tone='bank';
     $('step-detail').textContent=`라운드 점수 ${number(previousScore)} + ${number(last.score)} = ${number(score)}`;
-    renderRoundScore(score);
-    timer=setTimeout(()=>finishScoring({restoreFocus}),620);
+    renderStats();
+    timer=setTimeout(finishScoring,740);
   }
-  function finishScoring({restoreFocus=false,focus=true}={}){
+  function finishScoring({focus=true}={}){
     if(!calculation)return;
     clearTimeout(timer);
-    const focusCard=restoreFocus||document.activeElement===$('skip-scoring');
+    const focusCard=calculation.restoreFocus;
     calculation=null;
     busy=false;
     $('score-panel').classList.remove('is-scoring');
     delete $('score-panel').dataset.tone;
     $('score-step').hidden=true;
-    $('score-label').textContent='예상 점수';
-    $('score-equation').setAttribute('aria-label','예상 점수');
+    $('score-equation').hidden=true;
+    $('hand-score').textContent='?';
     render();
     if(focus){
       focusPhase();
@@ -206,15 +208,18 @@
     const quote=E.quote(run(),ids,{withSteps:true});
     if(!quote)return;
     const next=E.play(run(),ids);
-    calculation={steps:quote.steps,previousScore:run().score,banked:false,restoreFocus:document.activeElement===$('play')&&$('play').matches(':focus-visible')};
+    calculation={
+      steps:quote.steps,previousScore:run().score,previousCoins:run().coins,
+      previousBest:data.records.best,banked:false,
+      restoreFocus:document.activeElement===$('play')&&$('play').matches(':focus-visible')
+    };
     commit(next);
     message('');
     $('score-panel').classList.add('is-scoring');
     $('score-step').hidden=false;
     $('selection-label').textContent='점수 계산';
-    $('score-label').textContent='이번 점수';
-    $('score-equation').setAttribute('aria-label','이번 점수 계산');
-    $('preview-score').textContent='—';
+    $('score-equation').hidden=false;
+    $('hand-score').textContent='?';
     showScoreStep(0);
   }
   function start(mode){
@@ -229,18 +234,37 @@
   $('hand').addEventListener('click',event=>{
     const button=event.target.closest('[data-card]');if(!button||busy||run().phase!=='play')return;const id=Number(button.dataset.card);
     if(selected.has(id))selected.delete(id);else{if(selected.size===5){message('한 번에 최대 5장까지 고를 수 있어요.');return;}selected.add(id);}
-    message('');refreshPreview();
+    message('');refreshSelection();
   });
-  $('clear-selection').addEventListener('click',()=>{selected.clear();refreshPreview();});
+  $('clear-selection').addEventListener('click',()=>{selected.clear();refreshSelection();});
   $('play').addEventListener('click',playSelected);
-  $('skip-scoring').addEventListener('click',()=>finishScoring());
   $('discard').addEventListener('click',()=>{const count=selected.size;if(commit(E.discard(run(),[...selected]))){message(`${count}장을 바꾸었어요. 핸드는 그대로예요.`);$('hand').classList.remove('dealing');void $('hand').offsetWidth;$('hand').classList.add('dealing');}});
   for(const type of ['rank','suit'])$('sort-'+type).addEventListener('click',()=>{sort=type;renderHand();});
   $('shop-offers').addEventListener('click',event=>{const button=event.target.closest('[data-buy]');if(button){const next=E.buy(run(),Number(button.dataset.buy));if(commit(next))message('새로운 조합이 준비됐어요. 다음 수심에서 사용해 보세요.');}});
   $('reroll').addEventListener('click',()=>{if(commit(E.reroll(run())))message('정박지에 새 상품이 도착했어요.');});
   $('continue').addEventListener('click',()=>{if(commit(E.advance(run())))message('패와 덱을 새로 섞었어요. 유물과 족보 레벨은 그대로예요.');});
-  $('relics').addEventListener('click',event=>{const button=event.target.closest('[data-relic]');if(!button)return;detailRelic=button.dataset.relic;const relic=E.RELICS.find(r=>r.id===detailRelic);$('detail-kicker').textContent='RELIC COLLECTION';$('detail-title').textContent=relic.name;$('detail-content').innerHTML=A.icon(relic.icon)+`<p>${relic.text}</p><p class="help-foot">유물 효과는 예상 점수에 이미 포함돼요. 카드를 고른 뒤 ‘점수 계산 자세히’를 열면 어떤 유물이 적용되는지 볼 수 있어요.</p>`;$('sell-relic').hidden=run().phase!=='shop';$('sell-relic').textContent=`${Math.floor(relic.price/2)} 진주에 팔기`;$('detail-dialog').showModal();});
+  $('relics').addEventListener('click',event=>{const button=event.target.closest('[data-relic]');if(!button||busy)return;detailRelic=button.dataset.relic;const relic=E.RELICS.find(r=>r.id===detailRelic);$('detail-kicker').textContent='RELIC COLLECTION';$('detail-title').textContent=relic.name;$('detail-content').innerHTML=A.icon(relic.icon)+`<p>${relic.text}</p><p class="help-foot">카드를 낸 뒤 계산 과정에서 발동한 유물을 확인할 수 있어요.</p>`;$('sell-relic').hidden=run().phase!=='shop';$('sell-relic').textContent=`${Math.floor(relic.price/2)} 진주에 팔기`;$('detail-dialog').showModal();});
   $('sell-relic').addEventListener('click',()=>{if(commit(E.sell(run(),detailRelic))){$('detail-dialog').close();message('유물을 팔아 자리를 비웠어요.');}});
+  $('last-calculation').addEventListener('click',()=>{
+    const last=run().last;
+    if(!last||busy)return;
+    $('detail-kicker').textContent='직전 계산';
+    $('detail-title').textContent=`${E.HANDS[last.type].name} · ${number(last.score)}점`;
+    const summary=document.createElement('p');
+    summary.textContent=`${number(last.chips)} 칩 × ${number(last.mult)} 배수`;
+    const effects=document.createElement('dl');
+    effects.className='score-history';
+    for(const {name,detail} of last.effects){
+      const label=document.createElement('dt');
+      const value=document.createElement('dd');
+      label.textContent=name;
+      value.textContent=detail;
+      effects.append(label,value);
+    }
+    $('detail-content').replaceChildren(summary,effects);
+    $('sell-relic').hidden=true;
+    $('detail-dialog').showModal();
+  });
   $('deck').addEventListener('click',()=>{
     const counts=E.SUITS.map((s,i)=>run().deck.filter(id=>E.card(id).suit===i).length);$('detail-kicker').textContent='BELOW THE SURFACE';$('detail-title').textContent='아직 만나지 않은 카드';$('detail-content').innerHTML=`<p>남은 덱 ${run().deck.length}장 · 손패 ${run().hand.length}장 · 이미 사용한 카드 ${run().spent.length}장</p><div class="deck-grid">${E.SUITS.map((s,i)=>`<div>${s.symbol} ${s.name}<br><strong>${counts[i]}장</strong></div>`).join('')}</div><p class="help-foot">여기에는 남은 카드 수만 보여요. 다음 카드의 순서는 알 수 없어요. 새 라운드가 시작되면 52장을 모두 다시 섞어요.</p>`;$('sell-relic').hidden=true;$('detail-dialog').showModal();
   });
