@@ -1,7 +1,6 @@
 (function () {
   'use strict';
   const games = [
-    {id:'tidal',name:'심해 카드실',en:'TIDAL DECK',href:'tidal-deck/',tag:'카드 항해',group:'think',accent:'#b8dcca',description:'좋은 족보 하나, 뜻밖의 유물 시너지.',detail:'9라운드 · 상점과 강화 · 오늘의 도전',key:'little-arcade:tidal:v1'},
     {id:'potions',name:'달빛 물약실',en:'MOONLIT SORT',href:'moonlit-sort/',tag:'마법 정렬',group:'slow',accent:'#edc98d',description:'색을 모아, 한 병의 작은 마법을 완성해요.',detail:'36개 스테이지 · 숨은 색 · 마법 도구',key:'little-arcade:potions:v1'},
     {id:'night',name:'밤의 조각',en:'NIGHT PIECES',href:'night-pieces/',tag:'블록 퍼즐',group:'think',accent:'#b9abdf',description:'세 조각을 놓고, 꽉 찬 한 줄을 비워요.',detail:'드래그 · 콤보 · 매일 30수',key:'night-pieces-v1'},
     {id:'water',name:'물빛 정렬',en:'COLOR REVERIE',href:'water-sort/',tag:'색 정렬',group:'slow',accent:'#e8ae91',description:'조금씩 옮겨, 같은 색끼리 한 병에.',detail:'4–6색 · 되돌리기 · 시간 제한 없음',key:'little-arcade:water:v1'},
@@ -14,11 +13,7 @@
   function preview(id) {
     let shapes='';const rect=(x,y,w,h,fill,rx=4)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}"/>`;
     const text=(x,y,label,color='#f2eee7',size=15)=>`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" fill="${color}" font-family="system-ui,sans-serif" font-size="${size}" font-weight="650">${label}</text>`;
-    if(id==='tidal') {
-      shapes+='<ellipse cx="130" cy="88" rx="108" ry="64" fill="#25524d" stroke="#80a99a" stroke-opacity=".4"/><ellipse cx="130" cy="88" rx="99" ry="55" stroke="#98c1ab" stroke-opacity=".2" stroke-dasharray="2 5"/>';
-      [['A','♠',-15],['K','♥',-7],['Q','♣',0],['J','♦',7],['10','♠',15]].forEach(([rank,suit,turn],i)=>{const x=38+i*37,y=45+Math.abs(i-2)*4,color=['♥','♦'].includes(suit)?'#b74e44':'#264a55';shapes+=`<g transform="rotate(${turn} ${x+19} ${y+32})">${rect(x,y,37,58,'#efeada',4)}${text(x+10,y+12,rank,color,10)}${text(x+19,y+34,suit,color,25)}</g>`;});
-      shapes+=text(130,137,'CHIPS × MULT','#b9dfca',11);
-    } else if(id==='potions') {
+    if(id==='potions') {
       shapes+='<path d="M213 19a18 18 0 1 0 14 26 19 19 0 0 1-14-26Z" fill="#d8bd88" opacity=".85"/><path d="m39 25 2-5 2 5 5 2-5 2-2 5-2-5-5-2Z" fill="#ebd3a2"/>';
       const palette=['#a775ed','#49c9ac','#f3a25f','#62b9ed'];
       [[0,1,2],[2,0,1,0],[1,2,1,2],[]].forEach((tube,i)=>{
